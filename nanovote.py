@@ -32,10 +32,16 @@ number_of_votecounts = 0
 @bot.slash_command(
     name="addplayer",
     guild_ids=[dev_guild_id],
-    description="Adds a player to a Mafia game."
+    description="ADMIN: Adds a player to a Mafia game."
 )
 @commands.has_permissions(administrator=True)
 async def add_player(ctx: discord.ApplicationContext, player_name: str, player_discord_username: str, faction: str):
+    if db.is_valid_channel(int(ctx.channel.id)):
+        await ctx.respond('''WARNING: You are attempting to add a new player in a voting channel.
+Mafia players will be able to see your command usage, including the roles you assign players to.
+To avoid giving away role information, please use a private channel to add new players to a Mafia game.''',ephemeral=True)
+        return
+
     real_users = [member.name for member in ctx.bot.get_all_members()]
     if player_discord_username not in real_users:
         await ctx.respond("That username does not exist. Please check your spelling and try again.")
@@ -120,7 +126,7 @@ async def unvote(ctx: discord.ApplicationContext):
 @bot.slash_command(
     name="kill",
     guild_ids=[dev_guild_id],
-    description="Kills a player. Admin only."
+    description="ADMIN: Kills a player."
 )
 @commands.has_permissions(administrator=True)
 async def kill(ctx: discord.ApplicationContext, player_name: str, kill_text: str = ""):
@@ -135,24 +141,24 @@ async def kill(ctx: discord.ApplicationContext, player_name: str, kill_text: str
 
         
 @bot.slash_command(
-    name="endday",
+    name="resetvotes",
     guild_ids=[dev_guild_id],
-    description="End the day. Admin only."
+    description="ADMIN: Reset all votes."
 )
 @commands.has_permissions(administrator=True)
 async def end_day(ctx: discord.ApplicationContext):
     match db.end_day():
         case 0:
-            await ctx.respond("The day has ended. All votes have been reset.")
+            await ctx.respond("All votes have been reset.")
 
         case 1:
-            await ctx.respond("There was an unexpected error ending the day. Please try again.")
+            await ctx.respond("There was an unexpected error resetting votes. Please try again.")
 
 
 @bot.slash_command(
     name="setchannel",
     guild_ids=[dev_guild_id],
-    description="Sets the designated channel for voting commands. Admin only."
+    description="ADMIN: adds the current channel to the list of valid voting channels."
 )
 @commands.has_permissions(administrator=True)
 async def set_channel(ctx: discord.ApplicationContext):
@@ -167,7 +173,7 @@ async def set_channel(ctx: discord.ApplicationContext):
 @bot.slash_command(
     name="removechannel",
     guild_ids=[dev_guild_id],
-    description="Removes the designated channel from the list of valid channels. Admin only."
+    description="ADMIN: Removes the current channel from the list of valid voting channels."
 )
 @commands.has_permissions(administrator=True)
 async def remove_channel(ctx: discord.ApplicationContext):
@@ -178,7 +184,7 @@ async def remove_channel(ctx: discord.ApplicationContext):
 @bot.slash_command(
     name="shutdown",
     guild_ids=[dev_guild_id],
-    description="Shuts the bot down. Owner-only."
+    description="BOT OWNER: Shuts the bot down."
 )
 @commands.is_owner()
 async def shutdown(ctx: discord.ApplicationContext):
