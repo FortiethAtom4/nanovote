@@ -110,7 +110,10 @@ def get_all_players() -> list[Player]:
         for player in all_players:
             player = dict(player)
             temp = Player(player.get("name"),player.get("username"))
+            temp.set_faction(player.get("faction"))
             temp.set_votes(player.get("votes"))
+            temp.set_vote_value(player.get("vote_value"))
+            temp.set_voted_for(player.get("voted_for"))
             player_list.append(temp)
         
         return player_list
@@ -168,6 +171,23 @@ def unvote(voter_username) -> int:
         print("Unvote failed")
         return 1
     
+def set_vote_value(name: str, value: int) -> int:
+    try:
+        client = pymongo.MongoClient(db_URL)
+        db = client["MafiaPlayers"]
+        players = db["players"]
+
+        is_real_player = players.find_one({"name":name})
+        if is_real_player == None:
+            return -1
+
+        players.update_one({"name":name},{"$set":{"vote_value":value}})
+        return 0
+
+    except Exception as e:
+        print(e)
+        return 1
+    
 def end_day() -> int:
     try:
         client = pymongo.MongoClient(db_URL)
@@ -189,10 +209,23 @@ def kill_player(player_name) -> int:
         db = client["MafiaPlayers"]
         players = db["players"]
 
+        player = dict(players.find_one({"name":player_name}))
+
+#       remove dead player's vote
+        player_username = player.get("username")
+        unvote(player_username)
+
+#       remove other player's votes on dead player
+        votes_on_player = player.get("votes")
+        for player in votes_on_player:
+            their_username = dict(players.find_one({"name":player})).get("username")
+            unvote(their_username)
+
+#       do the deed
         players.delete_one({'name':player_name})
         return 0
 
-    except:
-        print("kill failed")
+    except Exception as e:
+        print(e)
         return 1
     

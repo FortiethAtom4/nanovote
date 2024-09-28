@@ -24,9 +24,6 @@ async def on_ready():
     print(f'''Successfully logged in as {bot.user}.
 Current latency: {round(bot.latency*1000,3)}ms''')
 
-# local variables
-number_of_votecounts = 0
-
 
 # commands here
 @bot.slash_command(
@@ -36,12 +33,6 @@ number_of_votecounts = 0
 )
 @commands.has_permissions(administrator=True)
 async def add_player(ctx: discord.ApplicationContext, player_name: str, player_discord_username: str, faction: str):
-    if db.is_valid_channel(int(ctx.channel.id)):
-        await ctx.respond('''WARNING: You are attempting to add a new player in a voting channel.
-Mafia players will be able to see your command usage, including the roles you assign players to.
-To avoid giving away role information, please use a private channel to add new players to a Mafia game.''',ephemeral=True)
-        return
-
     real_users = [member.name for member in ctx.bot.get_all_members()]
     if player_discord_username not in real_users:
         await ctx.respond("That username does not exist. Please check your spelling and try again.")
@@ -56,7 +47,7 @@ To avoid giving away role information, please use a private channel to add new p
         case -1:
             return_message = f"Player {player_name} ({player_discord_username}) is already in the game."
 
-    await ctx.respond(return_message)
+    await ctx.respond(return_message,ephemeral=True)
     return
 
 @bot.slash_command(
@@ -73,8 +64,22 @@ async def vote_count(ctx: discord.ApplicationContext):
         return
     
     for player in players:
-        response_string += player.to_string()+"\n"
+        response_string += player.to_string(False)+"\n"
     await ctx.respond(response_string)
+
+@bot.slash_command(
+    name="playerinfo",
+    guild_ids=[dev_guild_id],
+    description="ADMIN: displays all info about current players."
+)
+@commands.has_permissions(administrator=True)
+async def player_info(ctx: discord.ApplicationContext,invisible: bool):
+    players = db.get_all_players()
+    response_string = ""
+    for player in players:
+        response_string += player.to_string(True)
+        response_string += "\n-----\n"
+    await ctx.respond(response_string,ephemeral=invisible)
 
 @bot.slash_command(
     name="vote",
@@ -129,15 +134,13 @@ async def unvote(ctx: discord.ApplicationContext):
     description="ADMIN: Kills a player."
 )
 @commands.has_permissions(administrator=True)
-async def kill(ctx: discord.ApplicationContext, player_name: str, kill_text: str = ""):
+async def kill(ctx: discord.ApplicationContext, player_name: str):
     match db.kill_player(player_name):
         case 1:
-            await ctx.respond("There was an unexpected error when processing the kill. Please try again.")
+            await ctx.respond("There was an unexpected error when processing the kill. Please try again.",ephemeral=True)
 
         case 0:
-            if kill_text == "":
-                kill_text = f"{player_name} has died."
-            await ctx.respond(kill_text)
+            await ctx.respond(f"{player_name} has been killed. Remember to announce the death in daytime chat.",ephemeral=True)
 
         
 @bot.slash_command(
@@ -149,10 +152,26 @@ async def kill(ctx: discord.ApplicationContext, player_name: str, kill_text: str
 async def end_day(ctx: discord.ApplicationContext):
     match db.end_day():
         case 0:
-            await ctx.respond("All votes have been reset.")
+            await ctx.respond("All votes have been reset.",ephemeral=True)
 
         case 1:
-            await ctx.respond("There was an unexpected error resetting votes. Please try again.")
+            await ctx.respond("There was an unexpected error resetting votes. Please try again.",ephemeral=True)
+
+@bot.slash_command(
+    name="setvotevalue",
+    guild_ids=[dev_guild_id],
+    description="ADMIN: Set the value of a player's votes."
+)
+@commands.has_permissions(administrator=True)
+async def set_vote_value(ctx: discord.ApplicationContext, player_name: str, value: int):
+    match db.set_vote_value(player_name,value):
+        case 1:
+            await ctx.respond("There was an unexpected error setting vote value. Please try again.",ephemeral=True)
+        case -1:
+            await ctx.respond(f"Player {player_name} does not exist. Please check your spelling and try again.",ephemeral=True)
+        case 0:
+            await ctx.respond(f"{player_name}'s vote value has been set to {value}. NOTE: use /playerinfo to see players' vote values.",ephemeral=True)
+
 
 
 @bot.slash_command(
