@@ -18,6 +18,55 @@ def test_connection():
     except:
         return -1
     
+# sets channel for game.
+def set_channel(channel_id):
+    try:
+        client = pymongo.MongoClient(db_URL)
+        db = client["MafiaPlayers"]
+        channel = db["channel"]
+        if len(dict(channel.find({"channel_id":channel_id}))) > 0:
+            return -1
+        
+        to_insert = {"channel_id":channel_id}
+        channel.insert_one(to_insert)
+        return 0
+
+    except:
+        print("channel set failed")
+        return 1
+    
+# checks if a given channel is on the list of valid channels for commands.
+def is_valid_channel(channel_id) -> bool:
+    try:
+        client = pymongo.MongoClient(db_URL)
+        db = client["MafiaPlayers"]
+        channel = db["channel"]
+
+        ret = channel.find({})
+        for channel in ret:
+            if channel.get("channel_id") == channel_id:
+                return True
+        return False
+
+    except:
+        print("channel validation failed")
+        return 1
+
+# remove a channel from list of valid channels.
+def remove_channel(channel_id: int) -> int:
+    try:
+        client = pymongo.MongoClient(db_URL)
+        db = client["MafiaPlayers"]
+        channel = db["channel"]
+
+        channel.delete_one({"channel_id":channel_id})
+        return 0
+
+    except Exception as e:
+        print("channel remove failed:\n",e)
+        return 1
+
+    
 def is_playing(player_username) -> bool:
     try:
         client = pymongo.MongoClient(db_URL)
@@ -80,7 +129,7 @@ def vote(voter_username,voted_for_name) -> int:
 
 #       can't vote multiple times
         already_voted = voter.get("voted_for")
-        if voter_name in already_voted:
+        if already_voted != "":
             return -1
         
         # can't vote for players who don't exist

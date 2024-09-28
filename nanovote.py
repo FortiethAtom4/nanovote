@@ -27,6 +27,7 @@ Current latency: {round(bot.latency*1000,3)}ms''')
 # local variables
 number_of_votecounts = 0
 
+
 # commands here
 @bot.slash_command(
     name="addplayer",
@@ -34,9 +35,8 @@ number_of_votecounts = 0
     description="Adds a player to a Mafia game."
 )
 @commands.has_permissions(administrator=True)
-async def start_game(ctx: discord.ApplicationContext, player_name: str, player_discord_username: str, faction: str):
-    
-    real_users = (member.name for member in ctx.bot.get_all_members())
+async def add_player(ctx: discord.ApplicationContext, player_name: str, player_discord_username: str, faction: str):
+    real_users = [member.name for member in ctx.bot.get_all_members()]
     if player_discord_username not in real_users:
         await ctx.respond("That username does not exist. Please check your spelling and try again.")
         return
@@ -76,20 +76,23 @@ async def vote_count(ctx: discord.ApplicationContext):
     description="Vote for a player to be lynched."
 )
 async def vote(ctx: discord.ApplicationContext, voted_for_name: str):
-    username = ctx.user.name
-    if not db.is_playing(username):
-        await ctx.respond("You are not alive in this game!")
-        return
+    if db.is_valid_channel(int(ctx.channel.id)):
+        username = ctx.user.name
+        if not db.is_playing(username):
+            await ctx.respond("You are not alive in this game!")
+            return
 
-    match(db.vote(username,voted_for_name)):
-        case -1:
-            await ctx.respond(f"You have already voted!")
-        case 2:
-            await ctx.respond(f"Player \'{voted_for_name}\' does not exist. Please check your spelling and try again.")
-        case 1:
-            await ctx.respond(f"There was an unexpected error when processing vote for {voted_for_name}. Please try again.")
-        case 0:
-            await ctx.respond(f"You voted for {voted_for_name}.")
+        match(db.vote(username,voted_for_name)):
+            case -1:
+                await ctx.respond(f"You have already voted!")
+            case 2:
+                await ctx.respond(f"Player \'{voted_for_name}\' does not exist. Please check your spelling and try again.")
+            case 1:
+                await ctx.respond(f"There was an unexpected error when processing vote for {voted_for_name}. Please try again.")
+            case 0:
+                await ctx.respond(f"You voted for {voted_for_name}.")
+    else:
+        await ctx.respond("Mafia commands are not allowed in this channel. Please ask an admin to use /setchannel or use the appropriate channels.")
 
 
 @bot.slash_command(
@@ -98,18 +101,21 @@ async def vote(ctx: discord.ApplicationContext, voted_for_name: str):
     description="Revoke your vote on a player."
 )
 async def unvote(ctx: discord.ApplicationContext):
-    username = ctx.user.name
-    if not db.is_playing(username):
-        await ctx.respond("You are not alive in this game!")
-        return 
-    
-    match(db.unvote(username)):
-        case 1:
-            await ctx.respond("There was an unexpected error when processing your unvote. Please try again.")
-        case -1:
-            await ctx.respond("You haven't voted for anyone yet.")
-        case 0:
-            await ctx.respond("You unvoted.")
+    if db.is_valid_channel(int(ctx.channel.id)):
+        username = ctx.user.name
+        if not db.is_playing(username):
+            await ctx.respond("You are not alive in this game!")
+            return 
+        
+        match(db.unvote(username)):
+            case 1:
+                await ctx.respond("There was an unexpected error when processing your unvote. Please try again.")
+            case -1:
+                await ctx.respond("You haven't voted for anyone yet.")
+            case 0:
+                await ctx.respond("You unvoted.")
+    else:
+        await ctx.respond("Mafia commands are not allowed in this channel. Please ask an admin to use /setchannel or use the appropriate channels.")
 
 @bot.slash_command(
     name="kill",
@@ -117,13 +123,15 @@ async def unvote(ctx: discord.ApplicationContext):
     description="Kills a player. Admin only."
 )
 @commands.has_permissions(administrator=True)
-async def kill(ctx: discord.ApplicationContext, player_name: str):
+async def kill(ctx: discord.ApplicationContext, player_name: str, kill_text: str = ""):
     match db.kill_player(player_name):
         case 1:
             await ctx.respond("There was an unexpected error when processing the kill. Please try again.")
 
         case 0:
-            await ctx.respond(f"{player_name} has died.")
+            if kill_text == "":
+                kill_text = f"{player_name} has died."
+            await ctx.respond(kill_text)
 
         
 @bot.slash_command(
@@ -139,6 +147,32 @@ async def end_day(ctx: discord.ApplicationContext):
 
         case 1:
             await ctx.respond("There was an unexpected error ending the day. Please try again.")
+
+
+@bot.slash_command(
+    name="setchannel",
+    guild_ids=[dev_guild_id],
+    description="Sets the designated channel for voting commands. Admin only."
+)
+@commands.has_permissions(administrator=True)
+async def set_channel(ctx: discord.ApplicationContext):
+    match db.set_channel(int(ctx.channel.id)):
+        case -1:
+            await ctx.respond("This channel is already set. Remove it with /removechannel.")
+        case 1:
+            await ctx.respond("An unexpected error occurred when setting the channel. Please try again.")
+        case 0:
+            await ctx.respond(f"Channel set. Voting commands are now accessible from this channel.")
+
+@bot.slash_command(
+    name="removechannel",
+    guild_ids=[dev_guild_id],
+    description="Removes the designated channel from the list of valid channels. Admin only."
+)
+@commands.has_permissions(administrator=True)
+async def remove_channel(ctx: discord.ApplicationContext):
+    db.remove_channel(int(ctx.channel.id))
+    await ctx.respond("Voting commands are no longer accessible from this channel.")
 
 
 @bot.slash_command(
