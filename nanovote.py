@@ -60,7 +60,7 @@ bot.loop.create_task(check_time())
 @bot.slash_command(
     name="settimer",
     guild_ids=[GUILD_ID],
-    description="ADMIN: Sets a timer for the day to end. Time measured in hours."
+    description="MOD: Sets a timer for the day to end. Time measured in hours."
 )
 @commands.has_any_role("Moderator","Main Moderator")
 async def set_timer(ctx: discord.ApplicationContext, time_hours: int, time_minutes: int = 0):
@@ -95,7 +95,7 @@ async def check_time(ctx: discord.ApplicationContext):
 @bot.slash_command(
     name="addplayer",
     guild_ids=[GUILD_ID],
-    description="ADMIN: Adds a player to a Mafia game."
+    description="MOD: Adds a player to a Mafia game."
 )
 @commands.has_any_role("Moderator","Main Moderator")
 async def add_player(ctx: discord.ApplicationContext, player_name: str, player_discord_username: str, faction: str):
@@ -146,7 +146,7 @@ async def vote_count(ctx: discord.ApplicationContext):
 @bot.slash_command(
     name="playerinfo",
     guild_ids=[GUILD_ID],
-    description="ADMIN: displays all info about current players."
+    description="MOD: displays all info about current players."
 )
 @commands.has_any_role("Moderator","Main Moderator")
 async def player_info(ctx: discord.ApplicationContext,invisible: bool):
@@ -219,7 +219,7 @@ async def unvote(ctx: discord.ApplicationContext):
 @bot.slash_command(
     name="kill",
     guild_ids=[GUILD_ID],
-    description="ADMIN: Kills a player."
+    description="MOD: Kills a player."
 )
 @commands.has_any_role("Moderator","Main Moderator")
 async def kill(ctx: discord.ApplicationContext, player_name: str):
@@ -234,7 +234,7 @@ async def kill(ctx: discord.ApplicationContext, player_name: str):
 @bot.slash_command(
     name="resetvotes",
     guild_ids=[GUILD_ID],
-    description="ADMIN: Reset all votes."
+    description="MOD: Reset all votes."
 )
 @commands.has_any_role("Moderator","Main Moderator")
 async def end_day(ctx: discord.ApplicationContext):
@@ -250,7 +250,7 @@ async def end_day(ctx: discord.ApplicationContext):
 @bot.slash_command(
     name="setvotevalue",
     guild_ids=[GUILD_ID],
-    description="ADMIN: Set the value of a player's votes."
+    description="MOD: Set the value of a player's votes."
 )
 @commands.has_any_role("Moderator","Main Moderator")
 async def set_vote_value(ctx: discord.ApplicationContext, player_name: str, value: int):
@@ -267,7 +267,7 @@ async def set_vote_value(ctx: discord.ApplicationContext, player_name: str, valu
 @bot.slash_command(
     name="setchannel",
     guild_ids=[GUILD_ID],
-    description="ADMIN: adds the current channel to the list of valid voting channels."
+    description="MOD: adds the current channel to the list of valid voting channels."
 )
 @commands.has_any_role("Moderator","Main Moderator")
 async def set_channel(ctx: discord.ApplicationContext):
@@ -282,7 +282,7 @@ async def set_channel(ctx: discord.ApplicationContext):
 @bot.slash_command(
     name="removechannel",
     guild_ids=[GUILD_ID],
-    description="ADMIN: Removes the current channel from the list of valid voting channels."
+    description="MOD: Removes the current channel from the list of valid voting channels."
 )
 @commands.has_any_role("Moderator","Main Moderator")
 async def remove_channel(ctx: discord.ApplicationContext):
