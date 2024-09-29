@@ -1,8 +1,10 @@
 import os
 import logging
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from dotenv import load_dotenv
+import datetime
+from asyncio import sleep
 
 # local imports
 import db
@@ -26,14 +28,52 @@ bot = commands.Bot(intents=intents)
 # handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 # logger.addHandler(handler)
 
-
+# global time variables
+cur_time = datetime.datetime.now()
+end_time = datetime.datetime.now()
+timer_on: bool = False
+time_set_player = "" #sends a message to player who sets the timer
 
 # to show when bot first logs in.
+# checks and updates the time. Used for keeping track of day/night time
 @bot.event
-async def on_ready():
+async def check_time():
+    await bot.wait_until_ready()
     print(f'''Successfully logged in as {bot.user}.
 Current latency: {round(bot.latency*1000,3)}ms''')
+    while True:
+        global cur_time
+        cur_time = datetime.datetime.now()
 
+        global end_time
+        global timer_on
+        if timer_on and cur_time >= end_time:
+            global time_set_player
+            user = await bot.fetch_user(time_set_player)
+            await user.send("Your timer is up!")
+            timer_on = False
+        await sleep(1)
+
+bot.loop.create_task(check_time())
+
+@bot.slash_command(
+    name="settimer",
+    guild_ids=[GUILD_ID],
+    description="ADMIN: Sets a timer for the day to end. Time measured in hours."
+)
+@commands.has_permissions(administrator=True)
+async def set_timer(ctx: discord.ApplicationContext, time_hours: int, time_minutes: int = 0):
+    tmp = datetime.datetime.now() + datetime.timedelta(hours=time_hours, minutes=time_minutes)
+    
+    global end_time
+    end_time = tmp
+    
+    global timer_on
+    timer_on = True
+
+    global time_set_player
+    time_set_player = ctx.interaction.user.id
+    await ctx.respond(f"Timer has been set for {tmp.replace(microsecond=0)} EST. You will be sent a DM when time is up.")
 
 # commands here
 @bot.slash_command(
@@ -67,14 +107,23 @@ async def add_player(ctx: discord.ApplicationContext, player_name: str, player_d
 )
 async def vote_count(ctx: discord.ApplicationContext):
     players = db.get_all_players()
-    response_string = "```ini\n[Votes:]\n"
+    
 
     if len(players) == 0:
         await ctx.respond("No players have been added yet.")
         return
     
+    response_string = "```ini\n[Votes:]\n"
+
     for player in players:
         response_string += player.to_string(False)+"\n"
+
+    global end_time, cur_time, timer_on
+    if timer_on:
+        tmp_format_time = datetime.timedelta(seconds=int((end_time - cur_time).total_seconds()))
+        response_string += f"\n[Time remaining: {tmp_format_time}]\n"
+    else:
+        response_string += "\n[Time is up!]\n"
     response_string += "```"
     await ctx.respond(response_string)
 
