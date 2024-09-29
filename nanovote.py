@@ -75,6 +75,21 @@ async def set_timer(ctx: discord.ApplicationContext, time_hours: int, time_minut
     time_set_player = ctx.interaction.user.id
     await ctx.respond(f"Timer has been set for {tmp.replace(microsecond=0)} EST. You will be sent a DM when time is up.")
 
+@bot.slash_command(
+    name="checktime",
+    guild_ids=[GUILD_ID],
+    description="Gets the amount of time left."
+)
+async def check_time(ctx: discord.ApplicationContext):
+    global timer_on
+    if not timer_on:
+        await ctx.respond("Timer has not been set.",ephemeral=True)
+        return
+    global cur_time
+    global end_time
+    tmp_format_time = datetime.timedelta(seconds=int((end_time - cur_time).total_seconds()))
+    await ctx.respond(f"Time remaining: **{tmp_format_time}**",ephemeral=True)
+
 # commands here
 @bot.slash_command(
     name="addplayer",
