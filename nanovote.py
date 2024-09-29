@@ -28,7 +28,7 @@ Current latency: {round(bot.latency*1000,3)}ms''')
 # commands here
 @bot.slash_command(
     name="addplayer",
-    guild_ids=[dev_guild_id],
+    guild_ids=[dev_guild_id, mafia_guild_id],
     description="ADMIN: Adds a player to a Mafia game."
 )
 @commands.has_permissions(administrator=True)
@@ -52,7 +52,7 @@ async def add_player(ctx: discord.ApplicationContext, player_name: str, player_d
 
 @bot.slash_command(
     name="votecount",
-    guild_ids=[dev_guild_id],
+    guild_ids=[dev_guild_id, mafia_guild_id],
     description="Gets all players in the game and their vote counts."
 )
 async def vote_count(ctx: discord.ApplicationContext):
@@ -69,7 +69,7 @@ async def vote_count(ctx: discord.ApplicationContext):
 
 @bot.slash_command(
     name="playerinfo",
-    guild_ids=[dev_guild_id],
+    guild_ids=[dev_guild_id, mafia_guild_id],
     description="ADMIN: displays all info about current players."
 )
 @commands.has_permissions(administrator=True)
@@ -83,7 +83,7 @@ async def player_info(ctx: discord.ApplicationContext,invisible: bool):
 
 @bot.slash_command(
     name="vote",
-    guild_ids=[dev_guild_id],
+    guild_ids=[dev_guild_id, mafia_guild_id],
     description="Vote for a player to be lynched."
 )
 async def vote(ctx: discord.ApplicationContext, voted_for_name: str):
@@ -108,7 +108,7 @@ async def vote(ctx: discord.ApplicationContext, voted_for_name: str):
 
 @bot.slash_command(
     name="unvote",
-    guild_ids=[dev_guild_id],
+    guild_ids=[dev_guild_id, mafia_guild_id],
     description="Revoke your vote on a player."
 )
 async def unvote(ctx: discord.ApplicationContext):
@@ -130,7 +130,7 @@ async def unvote(ctx: discord.ApplicationContext):
 
 @bot.slash_command(
     name="kill",
-    guild_ids=[dev_guild_id],
+    guild_ids=[dev_guild_id, mafia_guild_id],
     description="ADMIN: Kills a player."
 )
 @commands.has_permissions(administrator=True)
@@ -145,7 +145,7 @@ async def kill(ctx: discord.ApplicationContext, player_name: str):
         
 @bot.slash_command(
     name="resetvotes",
-    guild_ids=[dev_guild_id],
+    guild_ids=[dev_guild_id, mafia_guild_id],
     description="ADMIN: Reset all votes."
 )
 @commands.has_permissions(administrator=True)
@@ -159,7 +159,7 @@ async def end_day(ctx: discord.ApplicationContext):
 
 @bot.slash_command(
     name="setvotevalue",
-    guild_ids=[dev_guild_id],
+    guild_ids=[dev_guild_id, mafia_guild_id],
     description="ADMIN: Set the value of a player's votes."
 )
 @commands.has_permissions(administrator=True)
@@ -176,7 +176,7 @@ async def set_vote_value(ctx: discord.ApplicationContext, player_name: str, valu
 
 @bot.slash_command(
     name="setchannel",
-    guild_ids=[dev_guild_id],
+    guild_ids=[dev_guild_id, mafia_guild_id],
     description="ADMIN: adds the current channel to the list of valid voting channels."
 )
 @commands.has_permissions(administrator=True)
@@ -191,7 +191,7 @@ async def set_channel(ctx: discord.ApplicationContext):
 
 @bot.slash_command(
     name="removechannel",
-    guild_ids=[dev_guild_id],
+    guild_ids=[dev_guild_id, mafia_guild_id],
     description="ADMIN: Removes the current channel from the list of valid voting channels."
 )
 @commands.has_permissions(administrator=True)
