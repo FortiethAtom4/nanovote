@@ -33,6 +33,7 @@ cur_time = datetime.datetime.now()
 end_time = datetime.datetime.now()
 timer_on: bool = False
 time_set_player = "" #sends a message to player who sets the timer
+majority: bool = False # for when majority is reached
 
 # to show when bot first logs in.
 # checks and updates the time. Used for keeping track of day/night time
@@ -163,6 +164,10 @@ async def player_info(ctx: discord.ApplicationContext,invisible: bool):
 )
 async def vote(ctx: discord.ApplicationContext, voted_for_name: str):
     if db.is_valid_channel(int(ctx.channel.id)):
+        global majority
+        if majority:
+            await ctx.respond("Majority has been reached. Voting commands have been disabled.")
+            return
         username = ctx.user.name
         if not db.is_playing(username):
             await ctx.respond("You are not alive in this game!")
@@ -175,6 +180,10 @@ async def vote(ctx: discord.ApplicationContext, voted_for_name: str):
                 await ctx.respond(f"Player \'{voted_for_name}\' does not exist. Please check your spelling and try again.")
             case 1:
                 await ctx.respond(f"There was an unexpected error when processing vote for {voted_for_name}. Please try again.")
+            case 1000:
+
+                majority = True
+                await ctx.respond(f"You voted for {voted_for_name}. **MAJORITY REACHED**")
             case 0:
                 await ctx.respond(f"You voted for {voted_for_name}.")
     else:
@@ -188,6 +197,10 @@ async def vote(ctx: discord.ApplicationContext, voted_for_name: str):
 )
 async def unvote(ctx: discord.ApplicationContext):
     if db.is_valid_channel(int(ctx.channel.id)):
+        global majority
+        if majority:
+            await ctx.respond("Majority has been reached. Voting commands have been disabled.")
+            return
         username = ctx.user.name
         if not db.is_playing(username):
             await ctx.respond("You are not alive in this game!")
@@ -227,6 +240,8 @@ async def kill(ctx: discord.ApplicationContext, player_name: str):
 async def end_day(ctx: discord.ApplicationContext):
     match db.end_day():
         case 0:
+            global majority
+            majority = False
             await ctx.respond("All votes have been reset.",ephemeral=True)
 
         case 1:

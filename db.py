@@ -144,9 +144,18 @@ def vote(voter_username,voted_for_name) -> int:
 
         players.update_one({"name":voted_for_name},{'$push':{'votes':voter_name}})
         players.update_one({'name':voter_name},{'$set':{'voted_for':voted_for_name}})
-        return 0
+        
+        # this sucks but I can't figure out a more efficient bulk search for vote values, this'll have to do for now
+        voter_list = dict(players.find_one({'name':voted_for_name})).get("votes")
+        total_votes: int = 0
+        for v in voter_list:
+            total_votes += dict(players.find_one({'name':v})).get("vote_value")
 
-    except:
+        total_players = len(players.find({}).to_list())
+        return 1000 if total_votes > int(total_players/2) else 0
+
+    except Exception as e:
+        print(e)
         return 1
     
 def unvote(voter_username) -> int:
