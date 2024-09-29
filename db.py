@@ -8,6 +8,8 @@ from mafia import Player
 load_dotenv()
 USER = os.getenv("MONGODB_USER")
 PASS = os.getenv("MONGODB_PASS")
+# different db collections, one for dev env one for mafiacord
+COLLECTION = os.getenv("DB_COLLECTION")
 db_URL = f"mongodb+srv://{USER}:{PASS}@nanobot.lab1zmc.mongodb.net/"
 
 # tests connection to database.
@@ -71,7 +73,7 @@ def is_playing(player_username) -> bool:
     try:
         client = pymongo.MongoClient(db_URL)
         db = client["MafiaPlayers"]
-        players = db["players"]
+        players = db[COLLECTION]
 
         return players.find_one({'username':player_username})
 
@@ -83,7 +85,7 @@ def add_player(player_name, player_username, player_faction) -> int:
     try:
         client = pymongo.MongoClient(db_URL)
         db = client["MafiaPlayers"]
-        players = db["players"]
+        players = db[COLLECTION]
 
         isnewplayer = list(players.find({"username":player_username}))
         is_unique_name = list(players.find({"name":player_name}))
@@ -102,7 +104,7 @@ def get_all_players() -> list[Player]:
     try:
         client = pymongo.MongoClient(db_URL)
         db = client["MafiaPlayers"]
-        players = db["players"]
+        players = db[COLLECTION]
 
         all_players = players.find({})
 
@@ -125,7 +127,7 @@ def vote(voter_username,voted_for_name) -> int:
     try:
         client = pymongo.MongoClient(db_URL)
         db = client["MafiaPlayers"]
-        players = db["players"]
+        players = db[COLLECTION]
 
         voter = dict(players.find_one({"username":voter_username}))
         voter_name = voter.get("name")
@@ -151,7 +153,7 @@ def unvote(voter_username) -> int:
     try:
         client = pymongo.MongoClient(db_URL)
         db = client["MafiaPlayers"]
-        players = db["players"]
+        players = db[COLLECTION]
 
         unvoter = dict(players.find_one({"username":voter_username}))
 #       havent voted for anybody yet
@@ -175,7 +177,7 @@ def set_vote_value(name: str, value: int) -> int:
     try:
         client = pymongo.MongoClient(db_URL)
         db = client["MafiaPlayers"]
-        players = db["players"]
+        players = db[COLLECTION]
 
         is_real_player = players.find_one({"name":name})
         if is_real_player == None:
@@ -192,7 +194,7 @@ def end_day() -> int:
     try:
         client = pymongo.MongoClient(db_URL)
         db = client["MafiaPlayers"]
-        players = db["players"]
+        players = db[COLLECTION]
 
         players.update_many({},{'$set':{'voted_for':""}})
         players.update_many({},{'$set':{'votes':[]}})
@@ -207,7 +209,7 @@ def kill_player(player_name) -> int:
     try:
         client = pymongo.MongoClient(db_URL)
         db = client["MafiaPlayers"]
-        players = db["players"]
+        players = db[COLLECTION]
 
         player = dict(players.find_one({"name":player_name}))
 

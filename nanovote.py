@@ -1,4 +1,5 @@
 import os
+import logging
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -18,6 +19,14 @@ intents = discord.Intents.all()
 # mafia_guild_id = 911178268332404756
 
 bot = commands.Bot(intents=intents)
+
+# logger = logging.getLogger('discord')
+# logger.setLevel(logging.DEBUG)
+# handler = logging.FileHandler(filename='nanovote.log', encoding='utf-8', mode='w')
+# handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+# logger.addHandler(handler)
+
+
 
 # to show when bot first logs in.
 @bot.event
