@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 
 # local imports
 import db
-import discord.ext
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -58,7 +57,7 @@ async def add_player(ctx: discord.ApplicationContext, player_name: str, player_d
 )
 async def vote_count(ctx: discord.ApplicationContext):
     players = db.get_all_players()
-    response_string = ""
+    response_string = "```ini\n"
 
     if len(players) == 0:
         await ctx.respond("No players have been added yet.")
@@ -66,6 +65,7 @@ async def vote_count(ctx: discord.ApplicationContext):
     
     for player in players:
         response_string += player.to_string(False)+"\n"
+    response_string += "```"
     await ctx.respond(response_string)
 
 @bot.slash_command(
