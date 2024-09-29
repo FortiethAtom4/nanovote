@@ -19,9 +19,12 @@ class Player:
 
     def to_string(self,admin: bool):
         voters = ""
-        for voter in self.votes:
-            voters += voter + ", "
-        return_string = f"[{self.name} ({len(self.votes)}): {voters}]"
+        vl = len(self.votes)
+        if vl > 0:
+            for i in range(vl - 1):
+                voters += self.votes[i] + ", "
+            voters += self.votes[vl - 1]
+        return_string = f"[{self.name} ({vl}): {voters}]"
         if not admin:
             return return_string
         # add info if admin
