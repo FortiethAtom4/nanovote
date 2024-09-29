@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 # local imports
 import db
+import discord.ext
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -16,7 +17,7 @@ dev_guild_id = 825590571606999040
 # mafia server ID
 mafia_guild_id = 911178268332404756
 
-bot = commands.Bot(command_prefix="",intents=intents)
+bot = commands.Bot(intents=intents)
 
 # to show when bot first logs in.
 @bot.event
