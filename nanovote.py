@@ -16,7 +16,7 @@ dev_guild_id = 825590571606999040
 # mafia server ID
 mafia_guild_id = 911178268332404756
 
-bot = commands.Bot(intents=intents)
+bot = commands.Bot(command_prefix="",intents=intents)
 
 # to show when bot first logs in.
 @bot.event
