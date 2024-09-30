@@ -180,6 +180,7 @@ async def vote(ctx: discord.ApplicationContext, voted_for_name: str):
         if not db.is_playing(username):
             await ctx.respond("You are not alive in this game!")
             return
+        
         global log_channel_id
         match(db.vote(username,voted_for_name)):
             case -1:
@@ -190,15 +191,17 @@ async def vote(ctx: discord.ApplicationContext, voted_for_name: str):
                 await ctx.respond(f"There was an unexpected error when processing vote for {voted_for_name}. Please try again.")
             case 1000:
                 majority = True
-                await ctx.respond(f"You voted for {voted_for_name}. **MAJORITY REACHED**")
+                interaction = await ctx.respond(f"You voted for {voted_for_name}. **MAJORITY REACHED**")
                 if log_channel_id != -1:
+                    resp = await interaction.original_response()
                     log_channel = bot.get_channel(log_channel_id)
-                    await log_channel.send(f"{db.get_name_from_username(username)} voted for {voted_for_name}. **MAJORITY REACHED**")
+                    await log_channel.send(f"[(LINK TO MESSAGE)]({resp.jump_url}) {db.get_name_from_username(username)} voted for {voted_for_name}. **MAJORITY REACHED**")
             case 0:
+                interaction = await ctx.respond(f"You voted for {voted_for_name}.")
                 if log_channel_id != -1:
+                    resp = await interaction.original_response()
                     log_channel = bot.get_channel(log_channel_id)
-                    await log_channel.send(f"{db.get_name_from_username(username)} voted for {voted_for_name}.")
-                await ctx.respond(f"You voted for {voted_for_name}.")
+                    await log_channel.send(f"[(LINK TO MESSAGE)]({resp.jump_url}) {db.get_name_from_username(username)} voted for {voted_for_name}.")
     else:
         await ctx.respond("Mafia commands are not allowed in this channel. Please ask an admin to use /setchannel or use the appropriate channels.")
 
@@ -231,11 +234,12 @@ async def unvote(ctx: discord.ApplicationContext):
             case -1:
                 await ctx.respond("You haven't voted for anyone yet.")
             case 0:
+                interaction = await ctx.respond("You unvoted.")
                 global log_channel_id
                 if log_channel_id != -1:
+                    resp = await interaction.original_response()
                     log_channel = bot.get_channel(log_channel_id)
-                    await log_channel.send(f"{db.get_name_from_username(username)} unvoted.")
-                await ctx.respond("You unvoted.")
+                    await log_channel.send(f"[(LINK TO MESSAGE)]({resp.jump_url}) {db.get_name_from_username(username)} unvoted.")
     else:
         await ctx.respond("Mafia commands are not allowed in this channel. Please ask an admin to use /setchannel or use the appropriate channels.")
 
