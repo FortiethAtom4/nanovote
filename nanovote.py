@@ -168,6 +168,12 @@ async def vote(ctx: discord.ApplicationContext, voted_for_name: str):
         if majority:
             await ctx.respond("Majority has been reached. Voting commands have been disabled.")
             return
+        
+        global timer_on
+        if not timer_on:
+            await ctx.respond("Time is up. Voting commands have been disabled.")
+            return
+        
         username = ctx.user.name
         if not db.is_playing(username):
             await ctx.respond("You are not alive in this game!")
@@ -201,6 +207,12 @@ async def unvote(ctx: discord.ApplicationContext):
         if majority:
             await ctx.respond("Majority has been reached. Voting commands have been disabled.")
             return
+        
+        global timer_on
+        if not timer_on:
+            await ctx.respond("Time is up. Voting commands have been disabled.")
+            return
+        
         username = ctx.user.name
         if not db.is_playing(username):
             await ctx.respond("You are not alive in this game!")
