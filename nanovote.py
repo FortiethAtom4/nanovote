@@ -262,7 +262,24 @@ async def set_vote_value(ctx: discord.ApplicationContext, player_name: str, valu
         case 0:
             await ctx.respond(f"{player_name}'s vote value has been set to {value}. NOTE: use /playerinfo to see players' vote values.",ephemeral=True)
 
-
+@bot.slash_command(
+    name="addvotes",
+    guild_ids=[GUILD_ID],
+    description="MOD: add or subtract votes from a player."
+)
+@commands.has_any_role("Moderator","Main Moderator")
+async def add_votes(ctx: discord.ApplicationContext, player_name: str, value: int):
+    match db.mod_add_vote(player_name,value):
+        case 1:
+            await ctx.respond("Unexpected error, please try again",ephemeral=True)
+        case -1:
+            await ctx.respond(f"Player {player_name} does not exist. Please check your spelling and try again.",ephemeral=True)
+        case 1000:
+            global majority
+            majority = True
+            await ctx.respond(f"Vote added to {player_name}. NOTE: A MAJORITY HAS BEEN REACHED. Voting has been disabled for your players.",ephemeral=True)
+        case 0:
+            await ctx.respond(f"Vote added to {player_name}.",ephemeral=True)
 
 @bot.slash_command(
     name="setchannel",

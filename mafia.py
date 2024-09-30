@@ -6,6 +6,7 @@ class Player:
         self.name = name
         self.faction = faction
         self.username = username
+        self.number_of_votes = 0 # this value is not necessarily equal to length of self.votes
         self.votes: list[str] = []
         self.voted_for = ""
         self.vote_value = 1 # used for doublevoters, negative voters, etc.
@@ -17,6 +18,9 @@ class Player:
     def set_votes(self,value):
         self.votes = value
 
+    def set_number_of_votes(self,value):
+        self.number_of_votes = value
+
     def to_string(self,admin: bool):
         voters = ""
         vl = len(self.votes)
@@ -24,7 +28,7 @@ class Player:
             for i in range(vl - 1):
                 voters += self.votes[i] + ", "
             voters += self.votes[vl - 1]
-        return_string = f"[{self.name} ({vl}): {voters}]"
+        return_string = f"[{self.name} ({self.number_of_votes}): {voters}]"
         if not admin:
             return return_string
         # add info if admin

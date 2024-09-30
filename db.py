@@ -1,6 +1,7 @@
 import pymongo
 import os
 from dotenv import load_dotenv
+import pymongo.collection
 
 # local imports
 from mafia import Player
@@ -116,12 +117,20 @@ def get_all_players() -> list[Player]:
             temp.set_votes(player.get("votes"))
             temp.set_vote_value(player.get("vote_value"))
             temp.set_voted_for(player.get("voted_for"))
+            temp.set_number_of_votes(player.get("number_of_votes"))
             player_list.append(temp)
         
         return player_list
     except:
         print("Player search failed")
         return []
+    
+def is_majority(players: pymongo.collection.Collection, player_name: str):
+    total_votes = dict(players.find_one({'name':player_name})).get("number_of_votes")
+
+    total_players = len(players.find({}).to_list())
+
+    return True if total_votes > (total_players/2) else False
     
 def vote(voter_username,voted_for_name) -> int:
     try:
@@ -131,6 +140,8 @@ def vote(voter_username,voted_for_name) -> int:
 
         voter = dict(players.find_one({"username":voter_username}))
         voter_name = voter.get("name")
+        voter_vote_value = voter.get("vote_value")
+
 
 #       can't vote multiple times
         already_voted = voter.get("voted_for")
@@ -143,16 +154,10 @@ def vote(voter_username,voted_for_name) -> int:
             return 2
 
         players.update_one({"name":voted_for_name},{'$push':{'votes':voter_name}})
-        players.update_one({'name':voter_name},{'$set':{'voted_for':voted_for_name}})
+        players.update_one({'name':voter_name},{'$set':{'voted_for':voted_for_name,}})
+        players.update_one({'name':voted_for_name},{'$inc':{'number_of_votes':int(voter_vote_value)}})
         
-        # this sucks but I can't figure out a more efficient bulk search for vote values, this'll have to do for now
-        voter_list = dict(players.find_one({'name':voted_for_name})).get("votes")
-        total_votes: int = 0
-        for v in voter_list:
-            total_votes += dict(players.find_one({'name':v})).get("vote_value")
-
-        total_players = len(players.find({}).to_list())
-        return 1000 if total_votes > int(total_players/2) else 0
+        return 1000 if is_majority(players,voted_for_name) else 0
 
     except Exception as e:
         print(e)
@@ -165,6 +170,7 @@ def unvote(voter_username) -> int:
         players = db[COLLECTION]
 
         unvoter = dict(players.find_one({"username":voter_username}))
+        unvoter_vote_value = unvoter.get("vote_value")
 #       havent voted for anybody yet
 
 #       name of the person player had voted for
@@ -176,6 +182,7 @@ def unvote(voter_username) -> int:
 
         players.update_one({"name":to_unvote_name},{'$pull':{'votes':unvoter_name}})
         players.update_one({'name':unvoter_name},{'$set':{'voted_for':""}})
+        players.update_one({'name':to_unvote_name},{'$inc':{'number_of_votes':int(-unvoter_vote_value)}})
         return 0
 
     except:
@@ -199,6 +206,22 @@ def set_vote_value(name: str, value: int) -> int:
         print(e)
         return 1
     
+def mod_add_vote(player_name: str, value: int) -> int:
+    try:
+        client = pymongo.MongoClient(db_URL)
+        db = client["MafiaPlayers"]
+        players = db[COLLECTION]
+
+        players.find_one_and_update({"name":player_name},{'$inc':{'number_of_votes':value}})
+        if players == None:
+            return -1
+        
+        return 1000 if is_majority(players,player_name) else 0
+
+    except Exception as e:
+        print(e)
+        return 1
+    
 def end_day() -> int:
     try:
         client = pymongo.MongoClient(db_URL)
@@ -207,6 +230,7 @@ def end_day() -> int:
 
         players.update_many({},{'$set':{'voted_for':""}})
         players.update_many({},{'$set':{'votes':[]}})
+        players.update_many({},{'$set':{'number_of_votes':0}})
         return 0
 
     except:
