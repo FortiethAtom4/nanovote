@@ -264,3 +264,14 @@ def kill_player(player_name) -> int:
         print(e)
         return 1
     
+def get_name_from_username(username: str):
+    try:
+        client = pymongo.MongoClient(db_URL)
+        db = client["MafiaPlayers"]
+        players = db[COLLECTION]
+
+        return dict(players.find_one({"username":username})).get("name")
+
+    except Exception as e:
+        print(e)
+        return ""

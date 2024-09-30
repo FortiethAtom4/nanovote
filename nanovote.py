@@ -35,6 +35,8 @@ timer_on: bool = False
 time_set_player = "" #sends a message to player who sets the timer
 majority: bool = False # for when majority is reached
 
+log_channel_id = -1 #for logging vote events
+
 # to show when bot first logs in.
 # checks and updates the time. Used for keeping track of day/night time
 @bot.event
@@ -178,7 +180,7 @@ async def vote(ctx: discord.ApplicationContext, voted_for_name: str):
         if not db.is_playing(username):
             await ctx.respond("You are not alive in this game!")
             return
-
+        global log_channel_id
         match(db.vote(username,voted_for_name)):
             case -1:
                 await ctx.respond(f"You have already voted!")
@@ -187,10 +189,15 @@ async def vote(ctx: discord.ApplicationContext, voted_for_name: str):
             case 1:
                 await ctx.respond(f"There was an unexpected error when processing vote for {voted_for_name}. Please try again.")
             case 1000:
-
                 majority = True
                 await ctx.respond(f"You voted for {voted_for_name}. **MAJORITY REACHED**")
+                if log_channel_id != -1:
+                    log_channel = bot.get_channel(log_channel_id)
+                    await log_channel.send(f"{db.get_name_from_username(username)} voted for {voted_for_name}. **MAJORITY REACHED**")
             case 0:
+                if log_channel_id != -1:
+                    log_channel = bot.get_channel(log_channel_id)
+                    await log_channel.send(f"{db.get_name_from_username(username)} voted for {voted_for_name}.")
                 await ctx.respond(f"You voted for {voted_for_name}.")
     else:
         await ctx.respond("Mafia commands are not allowed in this channel. Please ask an admin to use /setchannel or use the appropriate channels.")
@@ -224,6 +231,10 @@ async def unvote(ctx: discord.ApplicationContext):
             case -1:
                 await ctx.respond("You haven't voted for anyone yet.")
             case 0:
+                global log_channel_id
+                if log_channel_id != -1:
+                    log_channel = bot.get_channel(log_channel_id)
+                    await log_channel.send(f"{db.get_name_from_username(username)} unvoted.")
                 await ctx.respond("You unvoted.")
     else:
         await ctx.respond("Mafia commands are not allowed in this channel. Please ask an admin to use /setchannel or use the appropriate channels.")
@@ -317,6 +328,29 @@ async def set_channel(ctx: discord.ApplicationContext):
 async def remove_channel(ctx: discord.ApplicationContext):
     db.remove_channel(int(ctx.channel.id))
     await ctx.respond("Voting commands are no longer accessible from this channel.")
+
+@bot.slash_command(
+    name="setlogchannel",
+    guild_ids=[GUILD_ID],
+    description="MOD: flags the current channel for logging voting events."
+)
+@commands.has_any_role("Moderator","Main Moderator")
+async def set_log_channel(ctx: discord.ApplicationContext):
+    global log_channel_id 
+    log_channel_id = int(ctx.channel.id)
+    await ctx.respond("This channel has been flagged for logging events. Remove this flag with /removelogchannel.")
+
+@bot.slash_command(
+    name="removelogchannel",
+    guild_ids=[GUILD_ID],
+    description="MOD: removes flag from the configured logging channel."
+)
+@commands.has_any_role("Moderator","Main Moderator")
+async def remove_log_channel(ctx: discord.ApplicationContext):
+    global log_channel_id
+    log_channel_id = -1
+    await ctx.respond("Logging flag removed.")
+
 
 
 @bot.slash_command(
