@@ -132,7 +132,7 @@ async def vote_count(ctx: discord.ApplicationContext):
     
     response_string = "```ini\n[Votes:]\n"
 
-    players = sorted(players, key=lambda player:player.name)
+    players = sorted(players, key=lambda player:player.name.lower())
     for player in players:
         response_string += player.to_string(False)+"\n"
 
