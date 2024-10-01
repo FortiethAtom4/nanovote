@@ -125,7 +125,6 @@ async def add_player(ctx: discord.ApplicationContext, player_name: str, player_d
 )
 async def vote_count(ctx: discord.ApplicationContext):
     players = db.get_all_players()
-    
 
     if len(players) == 0:
         await ctx.respond("No players have been added yet.")
@@ -133,6 +132,7 @@ async def vote_count(ctx: discord.ApplicationContext):
     
     response_string = "```ini\n[Votes:]\n"
 
+    players = sorted(players, key=lambda player:player.name)
     for player in players:
         response_string += player.to_string(False)+"\n"
 
