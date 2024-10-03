@@ -4,8 +4,9 @@
 4. make playerinfo alphabetical order (why did you not do that before?) DONE
 
 
-new patch
-1. remove case sensitivity from voting
-2. add line to /votecount which says how many votes are needed for majority DONE
-3. Add bot DM when majority is reached DONE
-4. figure out why message responses occasionally fail even though command executes fine DONE(?)
+```MafiaBot Patch 1 Notes 10/2/24:
+1. Fixed a bug where some commands would succeed but would send the "failed unexpectedly" message (hopefully 100% gone but will be following up in the future)
+2. Removed case sensitivity from voting (but now can have lowercase in the vote message which is annoying, a permanent change will come after this mafia ends)
+3. Added line to /votecount which says how many votes are needed for majority
+4. Bot will now DM the mod when majority is reached
+5. Added some print statements in db execution to better check for errors```
