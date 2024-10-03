@@ -1,7 +1,11 @@
 1. day functionality, resetting days, adding days, etc
 2. logging lynches/kills(?) in voting log
 3. remove case sensitivity from voting
-4. make playerinfo alphabetical order (why did you not do that before?)
-5. add line to /votecount which says how many votes are needed for majority DONE
-6. Add bot DM when majority is reached DONE
-7. figure out why message responses occasionally fail even though command executes fine
+4. make playerinfo alphabetical order (why did you not do that before?) DONE
+
+
+new patch
+1. remove case sensitivity from voting
+2. add line to /votecount which says how many votes are needed for majority DONE
+3. Add bot DM when majority is reached DONE
+4. figure out why message responses occasionally fail even though command executes fine DONE(?)

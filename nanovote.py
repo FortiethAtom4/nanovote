@@ -44,17 +44,17 @@ async def check_time():
     await bot.wait_until_ready()
     print(f'''Successfully logged in as {bot.user}.
 Current latency: {round(bot.latency*1000,3)}ms''')
+    global cur_time
+    global end_time
+    global timer_on
     while True:
-        global cur_time
-        cur_time = datetime.datetime.now()
-
-        global end_time
-        global timer_on
-        if timer_on and cur_time >= end_time:
-            global time_set_player
-            user = await bot.fetch_user(time_set_player)
-            await user.send("Your timer is up!")
-            timer_on = False
+        if timer_on:
+            cur_time = datetime.datetime.now()
+            if cur_time >= end_time:
+                global time_set_player
+                user = await bot.fetch_user(time_set_player)
+                await user.send("Your timer is up!")
+                timer_on = False
         await sleep(1)
 
 bot.loop.create_task(check_time())
@@ -76,7 +76,7 @@ async def set_timer(ctx: discord.ApplicationContext, time_hours: int, time_minut
 
     global time_set_player
     time_set_player = ctx.interaction.user.id
-    await ctx.respond(f"Timer has been set for {tmp.replace(microsecond=0)} EST. You will be sent a DM when time is up.")
+    await ctx.respond(f"Timer has been set for {tmp.replace(microsecond=0)} EST. You will be sent a DM when time is up or if a majority is reached.")
 
 @bot.slash_command(
     name="checktime",
@@ -100,7 +100,8 @@ async def check_time(ctx: discord.ApplicationContext):
     description="MOD: Adds a player to a Mafia game."
 )
 @commands.has_any_role("Moderator","Main Moderator")
-async def add_player(ctx: discord.ApplicationContext, player_name: str, player_discord_username: str, faction: str):
+async def add_player(ctx: discord.Interaction, player_name: str, player_discord_username: str, faction: str):
+    await ctx.response.defer(ephemeral=True)
     real_users = [member.name for member in ctx.bot.get_all_members()]
     if player_discord_username not in real_users:
         await ctx.respond("That username does not exist. Please check your spelling and try again.")
@@ -123,7 +124,8 @@ async def add_player(ctx: discord.ApplicationContext, player_name: str, player_d
     guild_ids=[GUILD_ID],
     description="Gets all players in the game and their vote counts."
 )
-async def vote_count(ctx: discord.ApplicationContext):
+async def vote_count(ctx: discord.Interaction):
+    await ctx.response.defer()
     players = db.get_all_players()
     majority_value = db.get_majority()
 
@@ -146,11 +148,11 @@ async def vote_count(ctx: discord.ApplicationContext):
         response_string += f"\n[With {len(players)} players, it takes {majority_value} votes to reach majority.]\n"
 
     global end_time, cur_time
+    tmp_format_time = datetime.timedelta(seconds=int((end_time - cur_time).total_seconds()))
     if timer_on:
-        tmp_format_time = datetime.timedelta(seconds=int((end_time - cur_time).total_seconds()))
         response_string += f"[Time remaining: {tmp_format_time}]\n"
     else:
-        response_string += "[Time is up!]\n"
+        response_string += f"[Time remaining when majority was reached: {tmp_format_time}]\n" if majority else "[Time is up!]\n"
     response_string += "```"
     await ctx.respond(response_string)
 
@@ -160,7 +162,8 @@ async def vote_count(ctx: discord.ApplicationContext):
     description="MOD: displays all info about current players."
 )
 @commands.has_any_role("Moderator","Main Moderator")
-async def player_info(ctx: discord.ApplicationContext,invisible: bool):
+async def player_info(ctx: discord.Interaction,invisible: bool):
+    await ctx.response.defer(ephemeral=invisible)
     players = db.get_all_players()
     response_string = ""
     for player in players:
@@ -173,7 +176,9 @@ async def player_info(ctx: discord.ApplicationContext,invisible: bool):
     guild_ids=[GUILD_ID],
     description="Vote for a player to be lynched."
 )
-async def vote(ctx: discord.ApplicationContext, voted_for_name: str):
+async def vote(ctx: discord.Interaction, voted_for_name: str):
+    await ctx.response.defer()
+
     if db.is_valid_channel(int(ctx.channel.id)):
         global majority
         if majority:
@@ -199,6 +204,7 @@ async def vote(ctx: discord.ApplicationContext, voted_for_name: str):
             case 1:
                 await ctx.respond(f"There was an unexpected error when processing vote for {voted_for_name}. Please try again.")
             case 1000:
+                timer_on = False
                 majority = True
                 interaction = await ctx.respond(f"You voted for {voted_for_name}. **MAJORITY REACHED**")
                 global time_set_player
@@ -223,7 +229,9 @@ async def vote(ctx: discord.ApplicationContext, voted_for_name: str):
     guild_ids=[GUILD_ID],
     description="Revoke your vote on a player."
 )
-async def unvote(ctx: discord.ApplicationContext):
+async def unvote(ctx: discord.Interaction):
+    await ctx.response.defer()
+
     if db.is_valid_channel(int(ctx.channel.id)):
         global majority
         if majority:
@@ -261,7 +269,8 @@ async def unvote(ctx: discord.ApplicationContext):
     description="MOD: Kills a player."
 )
 @commands.has_any_role("Moderator","Main Moderator")
-async def kill(ctx: discord.ApplicationContext, player_name: str):
+async def kill(ctx: discord.Interaction, player_name: str):
+    await ctx.response.defer(ephemeral=True)
     match db.kill_player(player_name):
         case 1:
             await ctx.respond("There was an unexpected error when processing the kill. Please try again.",ephemeral=True)
