@@ -101,10 +101,10 @@ async def check_time(ctx: discord.ApplicationContext):
 )
 @commands.has_any_role("Moderator","Main Moderator")
 async def add_player(ctx: discord.Interaction, player_name: str, player_discord_username: str, faction: str):
-    await ctx.response.defer(ephemeral=True)
+    initial_response = await ctx.respond(f"Throwing {player_name}'s hat in the ring...",ephemeral=True)
     real_users = [member.name for member in ctx.bot.get_all_members()]
     if player_discord_username not in real_users:
-        await ctx.respond("That username does not exist. Please check your spelling and try again.")
+        await initial_response.edit(content="That username does not exist. Please check your spelling and try again.")
         return
     
     return_message = ""
@@ -116,7 +116,7 @@ async def add_player(ctx: discord.Interaction, player_name: str, player_discord_
         case -1:
             return_message = f"Player {player_name} ({player_discord_username}) is already in the game."
 
-    await ctx.respond(return_message,ephemeral=True)
+    await initial_response.edit(content=return_message)
     return
 
 @bot.slash_command(
@@ -125,12 +125,12 @@ async def add_player(ctx: discord.Interaction, player_name: str, player_discord_
     description="Gets all players in the game and their vote counts."
 )
 async def vote_count(ctx: discord.Interaction):
-    await ctx.response.defer()
+    initial_response = await ctx.respond("Tallying votes...")
     players = db.get_all_players()
     majority_value = db.get_majority()
 
     if len(players) == 0:
-        await ctx.respond("No players have been added yet.")
+        await initial_response.edit(content="No players have been added yet.")
         return
     
     response_string = "```ini\n[Votes:]\n"
@@ -154,7 +154,7 @@ async def vote_count(ctx: discord.Interaction):
     else:
         response_string += f"[Time remaining when majority was reached: {tmp_format_time}]\n" if majority else "[Time is up!]\n"
     response_string += "```"
-    await ctx.respond(response_string)
+    await initial_response.edit(content=response_string)
 
 @bot.slash_command(
     name="playerinfo",
@@ -177,51 +177,51 @@ async def player_info(ctx: discord.Interaction,invisible: bool):
     description="Vote for a player to be lynched."
 )
 async def vote(ctx: discord.Interaction, voted_for_name: str):
-    await ctx.response.defer()
+    initial_response = await ctx.respond("Sending your vote in...")
 
     if db.is_valid_channel(int(ctx.channel.id)):
         global majority
         if majority:
-            await ctx.respond("Majority has been reached. Voting commands have been disabled.")
+            await initial_response.edit("Majority has been reached. Voting commands have been disabled.")
             return
         
         global timer_on
         if not timer_on:
-            await ctx.respond("Time is up. Voting commands have been disabled.")
+            await initial_response.edit("Time is up. Voting commands have been disabled.")
             return
         
         username = ctx.user.name
         if not db.is_playing(username):
-            await ctx.respond("You are not alive in this game!")
+            await initial_response.edit("You are not alive in this game!")
             return
         
         global log_channel_id
         match(db.vote(username,voted_for_name)):
             case -1:
-                await ctx.respond(f"You have already voted!")
+                await initial_response.edit(content=f"You have already voted!")
             case 2:
-                await ctx.respond(f"Player \'{voted_for_name}\' does not exist. Please check your spelling and try again.")
+                await initial_response.edit(content=f"Player \'{voted_for_name}\' does not exist. Please check your spelling and try again.")
             case 1:
-                await ctx.respond(f"There was an unexpected error when processing vote for {voted_for_name}. Please try again.")
+                await initial_response.edit(content=f"There was an unexpected error when processing vote for {voted_for_name}. Please try again.")
             case 1000:
                 timer_on = False
                 majority = True
-                interaction = await ctx.respond(f"You voted for {voted_for_name}. **MAJORITY REACHED**")
+                await initial_response.edit(content=f"You voted for {voted_for_name}. **MAJORITY REACHED**")
                 global time_set_player
                 mod = await bot.fetch_user(time_set_player)
                 await mod.send("A majority has been reached!")
                 if log_channel_id != -1:
-                    resp = await interaction.original_response()
                     log_channel = bot.get_channel(log_channel_id)
+                    resp: discord.Message = await initial_response.original_message()
                     await log_channel.send(f"[(LINK TO MESSAGE)]({resp.jump_url}) {db.get_name_from_username(username)} voted for {voted_for_name}. **MAJORITY REACHED**")
             case 0:
-                interaction = await ctx.respond(f"You voted for {voted_for_name}.")
+                await initial_response.edit(content=f"You voted for {voted_for_name}.")
                 if log_channel_id != -1:
-                    resp = await interaction.original_response()
                     log_channel = bot.get_channel(log_channel_id)
+                    resp: discord.Message = await initial_response.original_message()
                     await log_channel.send(f"[(LINK TO MESSAGE)]({resp.jump_url}) {db.get_name_from_username(username)} voted for {voted_for_name}.")
     else:
-        await ctx.respond("Mafia commands are not allowed in this channel. Please ask an admin to use /setchannel or use the appropriate channels.")
+        await initial_response.edit(content="Mafia commands are not allowed in this channel. Please ask an admin to use /setchannel or use the appropriate channels.")
 
 
 @bot.slash_command(
@@ -230,34 +230,34 @@ async def vote(ctx: discord.Interaction, voted_for_name: str):
     description="Revoke your vote on a player."
 )
 async def unvote(ctx: discord.Interaction):
-    await ctx.response.defer()
+    initial_response = await ctx.respond("Pretending to do work...")
 
     if db.is_valid_channel(int(ctx.channel.id)):
         global majority
         if majority:
-            await ctx.respond("Majority has been reached. Voting commands have been disabled.")
+            await initial_response.edit(content="Majority has been reached. Voting commands have been disabled.")
             return
         
         global timer_on
         if not timer_on:
-            await ctx.respond("Time is up. Voting commands have been disabled.")
+            await initial_response.edit(content="Time is up. Voting commands have been disabled.")
             return
         
         username = ctx.user.name
         if not db.is_playing(username):
-            await ctx.respond("You are not alive in this game!")
+            await initial_response.edit(content="You are not alive in this game!")
             return 
         
         match(db.unvote(username)):
             case 1:
-                await ctx.respond("There was an unexpected error when processing your unvote. Please try again.")
+                await initial_response.edit(content="There was an unexpected error when processing your unvote. Please try again.")
             case -1:
-                await ctx.respond("You haven't voted for anyone yet.")
+                await initial_response.edit(content="You haven't voted for anyone yet.")
             case 0:
-                interaction = await ctx.respond("You unvoted.")
+                await initial_response.edit(content="You unvoted.")
                 global log_channel_id
                 if log_channel_id != -1:
-                    resp = await interaction.original_response()
+                    resp: discord.Message = await initial_response.original_message()
                     log_channel = bot.get_channel(log_channel_id)
                     await log_channel.send(f"[(LINK TO MESSAGE)]({resp.jump_url}) {db.get_name_from_username(username)} unvoted.")
     else:
