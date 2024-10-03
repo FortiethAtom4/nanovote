@@ -125,6 +125,7 @@ async def add_player(ctx: discord.ApplicationContext, player_name: str, player_d
 )
 async def vote_count(ctx: discord.ApplicationContext):
     players = db.get_all_players()
+    majority_value = db.get_majority()
 
     if len(players) == 0:
         await ctx.respond("No players have been added yet.")
@@ -136,12 +137,20 @@ async def vote_count(ctx: discord.ApplicationContext):
     for player in players:
         response_string += player.to_string(False)+"\n"
 
-    global end_time, cur_time, timer_on
+    global majority
+    global timer_on
+    if majority:
+        timer_on = False
+        response_string += "\n[A majority has been reached.]\n"
+    else:
+        response_string += f"\n[With {len(players)} players, it takes {majority_value} votes to reach majority.]\n"
+
+    global end_time, cur_time
     if timer_on:
         tmp_format_time = datetime.timedelta(seconds=int((end_time - cur_time).total_seconds()))
-        response_string += f"\n[Time remaining: {tmp_format_time}]\n"
+        response_string += f"[Time remaining: {tmp_format_time}]\n"
     else:
-        response_string += "\n[Time is up!]\n"
+        response_string += "[Time is up!]\n"
     response_string += "```"
     await ctx.respond(response_string)
 
@@ -192,6 +201,9 @@ async def vote(ctx: discord.ApplicationContext, voted_for_name: str):
             case 1000:
                 majority = True
                 interaction = await ctx.respond(f"You voted for {voted_for_name}. **MAJORITY REACHED**")
+                global time_set_player
+                mod = await bot.fetch_user(time_set_player)
+                await mod.send("A majority has been reached!")
                 if log_channel_id != -1:
                     resp = await interaction.original_response()
                     log_channel = bot.get_channel(log_channel_id)

@@ -2,6 +2,7 @@ import pymongo
 import os
 from dotenv import load_dotenv
 import pymongo.collection
+from math import trunc
 
 # local imports
 from mafia import Player
@@ -101,6 +102,17 @@ def add_player(player_name, player_username, player_faction) -> int:
         print("Player add failed")
         return 1
     
+def get_majority() -> int:
+    try:
+        client = pymongo.MongoClient(db_URL)
+        db = client["MafiaPlayers"]
+        players = db[COLLECTION]
+
+        return trunc(len(players.find({}).to_list())/2 + 1)
+    except Exception as e:
+        print(e)
+        return -1
+    
 def get_all_players() -> list[Player]:
     try:
         client = pymongo.MongoClient(db_URL)
@@ -125,10 +137,10 @@ def get_all_players() -> list[Player]:
         print("Player search failed")
         return []
     
-def is_majority(players: pymongo.collection.Collection, player_name: str):
-    total_votes = dict(players.find_one({'name':player_name})).get("number_of_votes")
-
-    total_players = len(players.find({}).to_list())
+def is_majority(players: list[dict], player_name: str):
+    # total_votes = dict(players.find_one({'name':player_name})).get("number_of_votes")
+    total_votes = next(player for player in players if player["name"] == player_name).get("number_of_votes")
+    total_players = len(players)
 
     return True if total_votes > (total_players/2) else False
     
@@ -138,7 +150,9 @@ def vote(voter_username,voted_for_name) -> int:
         db = client["MafiaPlayers"]
         players = db[COLLECTION]
 
-        voter = dict(players.find_one({"username":voter_username}))
+        all_players: list[dict] = players.find({}).to_list()
+        voter = next(player for player in all_players if player["username"] == voter_username)
+
         voter_name = voter.get("name")
         voter_vote_value = voter.get("vote_value")
 
@@ -149,15 +163,19 @@ def vote(voter_username,voted_for_name) -> int:
             return -1
         
         # can't vote for players who don't exist
-        is_real_player = players.find_one({'name':voted_for_name})
+        # next((item for item in dicts if item["name"] == "Pam"), None)
+        is_real_player = next((player for player in all_players if player["name"] == voted_for_name), None)
         if is_real_player == None:
             return 2
 
         players.update_one({"name":voted_for_name},{'$push':{'votes':voter_name}})
         players.update_one({'name':voter_name},{'$set':{'voted_for':voted_for_name,}})
         players.update_one({'name':voted_for_name},{'$inc':{'number_of_votes':int(voter_vote_value)}})
+
+        # this is necessary to update all_players with the new number of votes
+        next(player for player in all_players if player["name"] == voted_for_name)["number_of_votes"] += voter_vote_value
         
-        return 1000 if is_majority(players,voted_for_name) else 0
+        return 1000 if is_majority(all_players,voted_for_name) else 0
 
     except Exception as e:
         print(e)
@@ -171,9 +189,8 @@ def unvote(voter_username) -> int:
 
         unvoter = dict(players.find_one({"username":voter_username}))
         unvoter_vote_value = unvoter.get("vote_value")
+        
 #       havent voted for anybody yet
-
-#       name of the person player had voted for
         to_unvote_name = unvoter.get("voted_for")
         if to_unvote_name == "":
             return -1
@@ -216,7 +233,9 @@ def mod_add_vote(player_name: str, value: int) -> int:
         if players == None:
             return -1
         
-        return 1000 if is_majority(players,player_name) else 0
+        all_players = players.find({}).to_list()
+        
+        return 1000 if is_majority(all_players,player_name) else 0
 
     except Exception as e:
         print(e)
