@@ -210,7 +210,7 @@ Also displays the number of votes needed for majority and remaining time.
     description="Gets all players in the game and their vote counts."
 )
 async def vote_count(ctx: discord.Interaction):
-    initial_response = await ctx.respond("Tallying votes...")
+    initial_response = await ctx.respond("```ini\n[Tallying votes...]```")
     players = db.get_all_players()
     majority_value = db.get_majority()
 
