@@ -14,6 +14,7 @@ Stuff to add:
 3. Add command to set the username of player to receive timer/majority DMs
 4. add lowercase version of each person's name in the DB to speed up calls and make case insensitivity much easier
 5. allow mods to create advanced voting rules for specific players - this one's gonna take a bit
+6. allow mod to toggle majority in case of stupid dumb players
 
 ```MafiaBot Patch 2 Notes [date]:
 1. Added the ability to add or subtract time from the timer without having to reset the whole thing every time

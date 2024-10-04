@@ -115,6 +115,17 @@ async def set_timer(ctx: discord.ApplicationContext, time_hours: int, time_minut
     print(f"-+ Timer set to {tmp_format_time} by {bot.get_user(time_set_player)}")
     await ctx.respond(f"Timer has been set to **{tmp_format_time}**, starting now. You will be sent a DM when time is up or if a majority is reached.")
 
+@bot.slash_command(
+    name="togglemajority",
+    guild_ids=[GUILD_ID],
+    description="MOD: toggles majority check."
+)
+@commands.has_any_role("Moderator","Main Moderator")
+async def toggle_majority(ctx: discord.Interaction):
+    global majority
+    majority = not majority
+    await ctx.respond(f"Majority check set to {majority}.",ephemeral=True)
+
 """ 
 /checktime
 Sends a message stating the time left on the bot's timer.
