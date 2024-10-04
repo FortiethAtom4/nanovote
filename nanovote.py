@@ -140,6 +140,7 @@ async def check_time(ctx: discord.Interaction):
 """
 /addtime
 Adds extra time to the timer.
+Works with negative values.
 """
 @bot.slash_command(
     name="addtime",
