@@ -35,15 +35,40 @@ timer_on: bool = False
 time_set_player = "" #sends a message to player who sets the timer
 majority: bool = False # for when majority is reached
 
-log_channel_id = -1 #for logging vote events
+# local lists of channel ids. Fetched when the bot starts.
+valid_channel_ids: list[int] = []
+log_channel_ids: list[int] = []
+
+
+# why did i waste my time adding this
+print("""---------##---------
+-------######-------
+-----##########-----
+---##############---
+-##################-
+##### NANOVOTE #####
+-##################-
+---##############---
+-----##########-----
+-------######-------
+---------##---------\n""")
+print("-> Logging in...")
 
 # to show when bot first logs in.
+@bot.event
+async def on_ready():
+    print(f"-+ Successfully logged in as {bot.user}.")
+    print(f"-i Current latency: {round(bot.latency*1000,3)}ms")
+    print("-> Retrieving voting channels...")
+    global valid_channel_ids
+    valid_channel_ids = db.get_all_valid_channels()
+    print("-> Retrieving logging channels...")
+    global log_channel_ids
+    log_channel_ids = db.get_all_logging_channels()
+    print("-+ Ready\n")
 # checks and updates the time. Used for keeping track of day/night time
 @bot.event
-async def check_time():
-    await bot.wait_until_ready()
-    print(f'''Successfully logged in as {bot.user}.
-Current latency: {round(bot.latency*1000,3)}ms''')
+async def do_timer():
     global cur_time
     global end_time
     global timer_on
@@ -56,17 +81,26 @@ Current latency: {round(bot.latency*1000,3)}ms''')
                 await user.send("Your timer is up!")
                 timer_on = False
         await sleep(1)
+    
 
-bot.loop.create_task(check_time())
+bot.loop.create_task(do_timer())
 
+""" 
+/settimer
+Sets a timer for the mod for the day to end.
+Takes an integer value for number of hours.
+Optional minutes variable as well for partial hours.
+"""
 @bot.slash_command(
     name="settimer",
     guild_ids=[GUILD_ID],
-    description="MOD: Sets a timer for the day to end. Time measured in hours."
+    description="MOD: Sets a timer for the day to end."
 )
 @commands.has_any_role("Moderator","Main Moderator")
 async def set_timer(ctx: discord.ApplicationContext, time_hours: int, time_minutes: int = 0):
-    tmp = datetime.datetime.now() + datetime.timedelta(hours=time_hours, minutes=time_minutes)
+    global cur_time
+    cur_time = datetime.datetime.now()
+    tmp = cur_time + datetime.timedelta(hours=time_hours, minutes=time_minutes)
     
     global end_time
     end_time = tmp
@@ -76,14 +110,23 @@ async def set_timer(ctx: discord.ApplicationContext, time_hours: int, time_minut
 
     global time_set_player
     time_set_player = ctx.interaction.user.id
-    await ctx.respond(f"Timer has been set for {tmp.replace(microsecond=0)} EST. You will be sent a DM when time is up or if a majority is reached.")
 
+    tmp_format_time = datetime.timedelta(seconds=int((end_time - cur_time).total_seconds()))
+    print(f"-+ Timer set to {tmp_format_time} by {bot.get_user(time_set_player)}")
+    await ctx.respond(f"Timer has been set to **{tmp_format_time}**, starting now. You will be sent a DM when time is up or if a majority is reached.")
+
+""" 
+/checktime
+Sends a message stating the time left on the bot's timer.
+Checktime messages are private so as not to spam the chat with timers.
+If time needs to be seen publicly, use /votecount.
+"""
 @bot.slash_command(
     name="checktime",
     guild_ids=[GUILD_ID],
     description="Gets the amount of time left."
 )
-async def check_time(ctx: discord.ApplicationContext):
+async def check_time(ctx: discord.Interaction):
     global timer_on
     if not timer_on:
         await ctx.respond("Timer has not been set.",ephemeral=True)
@@ -93,7 +136,39 @@ async def check_time(ctx: discord.ApplicationContext):
     tmp_format_time = datetime.timedelta(seconds=int((end_time - cur_time).total_seconds()))
     await ctx.respond(f"Time remaining: **{tmp_format_time}**",ephemeral=True)
 
-# commands here
+
+"""
+/addtime
+Adds extra time to the timer.
+"""
+@bot.slash_command(
+    name="addtime",
+    guild_ids=[GUILD_ID],
+    description="MOD: Adds time to the timer. Negative values will subtract time instead."
+)
+@commands.has_any_role("Moderator","Main Moderator")
+async def set_timer(ctx: discord.Interaction, time_hours: int, time_minutes: int = 0):
+    global timer_on
+    if not timer_on:
+        await ctx.respond("Timer has not been set. Set it first with /settimer.")
+        return
+    
+    global end_time
+    total_seconds = time_hours * 3600 + time_minutes * 60
+    time_to_add = datetime.timedelta(seconds=total_seconds)
+    end_time += time_to_add
+
+    print(f"-+ Added {total_seconds} seconds to the timer")
+    if total_seconds < 0:
+        await ctx.respond(f"{datetime.timedelta(seconds=-total_seconds)} subtracted.")
+    else:
+        await ctx.respond(f"{time_to_add} added.")
+
+"""
+/addplayer
+Persists a new Player object to the database.
+Includes name, Discord username, and their faction.
+"""
 @bot.slash_command(
     name="addplayer",
     guild_ids=[GUILD_ID],
@@ -107,18 +182,27 @@ async def add_player(ctx: discord.Interaction, player_name: str, player_discord_
         await initial_response.edit(content="That username does not exist. Please check your spelling and try again.")
         return
     
+    print(f"-> Adding new player {player_name}...")
     return_message = ""
     match db.add_player(player_name, player_discord_username, faction):
         case 0:
+            print("-+ Player added successfully")
             return_message = f"Player {player_name} ({player_discord_username}) successfully added."
         case 1:
+            print("-- Player add failed")
             return_message = f"There was a problem adding this player. Please try again."
         case -1:
+            print(f"-i Player {player_name} aleady in game, aborting")
             return_message = f"Player {player_name} ({player_discord_username}) is already in the game."
 
     await initial_response.edit(content=return_message)
     return
 
+""" 
+/votecount
+Retrieves a list of all players in the game and their vote counts.
+Also displays the number of votes needed for majority and remaining time.
+"""
 @bot.slash_command(
     name="votecount",
     guild_ids=[GUILD_ID],
@@ -129,6 +213,7 @@ async def vote_count(ctx: discord.Interaction):
     players = db.get_all_players()
     majority_value = db.get_majority()
 
+    print("-> Getting votecount...")
     if len(players) == 0:
         await initial_response.edit(content="No players have been added yet.")
         return
@@ -154,23 +239,39 @@ async def vote_count(ctx: discord.Interaction):
     else:
         response_string += f"[Time remaining when majority was reached: {tmp_format_time}]\n" if majority else "[Time is up!]\n"
     response_string += "```"
+    print("-+ Sent votecount")
     await initial_response.edit(content=response_string)
 
+""" 
+/playerinfo
+An advanced form of /votecount that shows additional info about each player.
+This includes who each player has voted for, their vote's value, and their faction.
+Response is invisible to other players to avoid accidental info leaks.
+"""
 @bot.slash_command(
     name="playerinfo",
     guild_ids=[GUILD_ID],
     description="MOD: displays all info about current players."
 )
 @commands.has_any_role("Moderator","Main Moderator")
-async def player_info(ctx: discord.Interaction,invisible: bool):
-    await ctx.response.defer(ephemeral=invisible)
+async def player_info(ctx: discord.Interaction):
+    initial_response = await ctx.respond("Getting the deets...",ephemeral=True)
+    print("-> Getting all player info...")
     players = db.get_all_players()
-    response_string = ""
+    response_string = "```"
     for player in players:
         response_string += player.to_string(True)
         response_string += "\n-----\n"
-    await ctx.respond(response_string,ephemeral=invisible)
+    response_string += "```"
+    print("-+ Sent player info")
+    await initial_response.edit(content=response_string)
 
+""" 
+/vote
+Vote for a player to be lynched.
+Votes will be logged in a configured log channel.
+Will display a special message and disable voting commands if a majority is reached.
+"""
 @bot.slash_command(
     name="vote",
     guild_ids=[GUILD_ID],
@@ -178,24 +279,26 @@ async def player_info(ctx: discord.Interaction,invisible: bool):
 )
 async def vote(ctx: discord.Interaction, voted_for_name: str):
     initial_response = await ctx.respond("Sending your vote in...")
-
-    if db.is_valid_channel(int(ctx.channel.id)):
+    global valid_channel_ids
+    if ctx.channel.id in valid_channel_ids:
         global majority
         if majority:
-            await initial_response.edit("Majority has been reached. Voting commands have been disabled.")
+            await initial_response.edit(content="Majority has been reached. Voting commands have been disabled.")
             return
         
         global timer_on
         if not timer_on:
-            await initial_response.edit("Time is up. Voting commands have been disabled.")
+            await initial_response.edit(content="Time is up. Voting commands have been disabled.")
             return
         
         username = ctx.user.name
         if not db.is_playing(username):
-            await initial_response.edit("You are not alive in this game!")
+            await initial_response.edit(content="You are not alive in this game!")
             return
         
-        global log_channel_id
+        global log_channel_ids
+        voter_name = db.get_name_from_username(username)
+        print(f"-> Sending in {voter_name}'s vote on {voted_for_name}...")
         match(db.vote(username,voted_for_name)):
             case -1:
                 await initial_response.edit(content=f"You have already voted!")
@@ -210,20 +313,26 @@ async def vote(ctx: discord.Interaction, voted_for_name: str):
                 global time_set_player
                 mod = await bot.fetch_user(time_set_player)
                 await mod.send("A majority has been reached!")
-                if log_channel_id != -1:
-                    log_channel = bot.get_channel(log_channel_id)
-                    resp: discord.Message = await initial_response.original_message()
-                    await log_channel.send(f"[(LINK TO MESSAGE)]({resp.jump_url}) {db.get_name_from_username(username)} voted for {voted_for_name}. **MAJORITY REACHED**")
+                resp: discord.Message = await initial_response.original_response()
+                for c in log_channel_ids:
+                    log_channel: discord.TextChannel = bot.get_channel(c)
+                    await log_channel.send(f"[(LINK TO MESSAGE)]({resp.jump_url}) {voter_name} voted for {voted_for_name}. **MAJORITY REACHED**")
+                print(f"-+ {voter_name} voted for {voted_for_name} and a majority was reached")
             case 0:
                 await initial_response.edit(content=f"You voted for {voted_for_name}.")
-                if log_channel_id != -1:
-                    log_channel = bot.get_channel(log_channel_id)
-                    resp: discord.Message = await initial_response.original_message()
-                    await log_channel.send(f"[(LINK TO MESSAGE)]({resp.jump_url}) {db.get_name_from_username(username)} voted for {voted_for_name}.")
+                resp: discord.Message = await initial_response.original_response()
+                for c in log_channel_ids:
+                    log_channel: discord.TextChannel = bot.get_channel(c)
+                    await log_channel.send(f"[(LINK TO MESSAGE)]({resp.jump_url}) {voter_name} voted for {voted_for_name}.")
+                print(f"-+ {voter_name} voted for {voted_for_name}")
     else:
         await initial_response.edit(content="Mafia commands are not allowed in this channel. Please ask an admin to use /setchannel or use the appropriate channels.")
 
-
+""" 
+/unvote
+Revokes a player's vote.
+Unvotes will be logged in a configured log channel.
+"""
 @bot.slash_command(
     name="unvote",
     guild_ids=[GUILD_ID],
@@ -232,7 +341,8 @@ async def vote(ctx: discord.Interaction, voted_for_name: str):
 async def unvote(ctx: discord.Interaction):
     initial_response = await ctx.respond("Pretending to do work...")
 
-    if db.is_valid_channel(int(ctx.channel.id)):
+    global valid_channel_ids
+    if ctx.channel.id in valid_channel_ids:
         global majority
         if majority:
             await initial_response.edit(content="Majority has been reached. Voting commands have been disabled.")
@@ -248,21 +358,32 @@ async def unvote(ctx: discord.Interaction):
             await initial_response.edit(content="You are not alive in this game!")
             return 
         
+        unvoter_name = db.get_name_from_username(username)
+        print(f"-> {unvoter_name} is unvoting...")
         match(db.unvote(username)):
             case 1:
+                print("-- An error occurred when processing unvote")
                 await initial_response.edit(content="There was an unexpected error when processing your unvote. Please try again.")
             case -1:
+                print(f"-i {unvoter_name} has not voted, aborting")
                 await initial_response.edit(content="You haven't voted for anyone yet.")
             case 0:
                 await initial_response.edit(content="You unvoted.")
-                global log_channel_id
-                if log_channel_id != -1:
-                    resp: discord.Message = await initial_response.original_message()
-                    log_channel = bot.get_channel(log_channel_id)
-                    await log_channel.send(f"[(LINK TO MESSAGE)]({resp.jump_url}) {db.get_name_from_username(username)} unvoted.")
+                global log_channel_ids
+                resp: discord.Message = await initial_response.original_response()
+                for c in log_channel_ids:
+                    log_channel: discord.TextChannel = bot.get_channel(c)
+                    await log_channel.send(f"[(LINK TO MESSAGE)]({resp.jump_url}) {unvoter_name} unvoted.")
+
+                print(f"-+ {unvoter_name} unvoted")
     else:
         await ctx.respond("Mafia commands are not allowed in this channel. Please ask an admin to use /setchannel or use the appropriate channels.")
 
+"""
+/kill
+Kills a player.
+Removes all their votes and resets all votes on that player.
+"""
 @bot.slash_command(
     name="kill",
     guild_ids=[GUILD_ID],
@@ -271,113 +392,192 @@ async def unvote(ctx: discord.Interaction):
 @commands.has_any_role("Moderator","Main Moderator")
 async def kill(ctx: discord.Interaction, player_name: str):
     await ctx.response.defer(ephemeral=True)
+
+    print(f"-> Killing {player_name}...")
     match db.kill_player(player_name):
         case 1:
+            print(f"-- An error occurred when killing {player_name}")
             await ctx.respond("There was an unexpected error when processing the kill. Please try again.",ephemeral=True)
 
         case 0:
+            print("-+ Kill successful")
             await ctx.respond(f"{player_name} has been killed. Remember to announce the death in daytime chat.",ephemeral=True)
 
-        
+"""
+/resetvotes
+Resets votes for all players and resets the majority check.
+"""
 @bot.slash_command(
     name="resetvotes",
     guild_ids=[GUILD_ID],
     description="MOD: Reset all votes."
 )
 @commands.has_any_role("Moderator","Main Moderator")
-async def end_day(ctx: discord.ApplicationContext):
+async def end_day(ctx: discord.Interaction):
+
+    print("-> Resetting all votes...")
     match db.end_day():
         case 0:
+            print("-+ All votes reset")
             global majority
             majority = False
             await ctx.respond("All votes have been reset.",ephemeral=True)
 
         case 1:
+            print("-- An error occurred when resetting votes")
             await ctx.respond("There was an unexpected error resetting votes. Please try again.",ephemeral=True)
 
+"""
+/setvotevalue
+Sets the value of a player's votes.
+Functions for both positive and negative values.
+"""
 @bot.slash_command(
     name="setvotevalue",
     guild_ids=[GUILD_ID],
     description="MOD: Set the value of a player's votes."
 )
 @commands.has_any_role("Moderator","Main Moderator")
-async def set_vote_value(ctx: discord.ApplicationContext, player_name: str, value: int):
+async def set_vote_value(ctx: discord.Interaction, player_name: str, value: int):
+    print(f"-> Setting vote value of {player_name} to {value}...")
     match db.set_vote_value(player_name,value):
         case 1:
+            print("-- An unexpected error occurred when setting vote value")
             await ctx.respond("There was an unexpected error setting vote value. Please try again.",ephemeral=True)
         case -1:
+            print(f"-i Player {player_name} does not exist, aborting")
             await ctx.respond(f"Player {player_name} does not exist. Please check your spelling and try again.",ephemeral=True)
         case 0:
+            print(f"-+ Player vote value set")
             await ctx.respond(f"{player_name}'s vote value has been set to {value}. NOTE: use /playerinfo to see players' vote values.",ephemeral=True)
 
+"""
+/addvotes
+Adds or subtracts votes from a player.
+Subtraction is done with negative numbers.
+"""
 @bot.slash_command(
     name="addvotes",
     guild_ids=[GUILD_ID],
     description="MOD: add or subtract votes from a player."
 )
 @commands.has_any_role("Moderator","Main Moderator")
-async def add_votes(ctx: discord.ApplicationContext, player_name: str, value: int):
+async def add_votes(ctx: discord.Interaction, player_name: str, value: int):
+    print(f"-> Adding {value} vote{"s" if value is not abs(1) else ""} to {player_name}...")
     match db.mod_add_vote(player_name,value):
         case 1:
+            print(f"-- An unexpected error occurred when adding votes")
             await ctx.respond("Unexpected error, please try again",ephemeral=True)
         case -1:
+            print(f"-i Player {player_name} not found, aborting")
             await ctx.respond(f"Player {player_name} does not exist. Please check your spelling and try again.",ephemeral=True)
         case 1000:
             global majority
             majority = True
+            print(f"-+ Successfully added, majority reached")
             await ctx.respond(f"Vote added to {player_name}. NOTE: A MAJORITY HAS BEEN REACHED. Voting has been disabled for your players.",ephemeral=True)
         case 0:
+            print(f"-+ Successfully added")
             await ctx.respond(f"Vote added to {player_name}.",ephemeral=True)
 
+"""
+/setchannel
+Persists a Discord channel to the 'channels' collection.
+Players are only permitted to use voting commands in channels set with this command.
+"""
 @bot.slash_command(
     name="setchannel",
     guild_ids=[GUILD_ID],
     description="MOD: adds the current channel to the list of valid voting channels."
 )
 @commands.has_any_role("Moderator","Main Moderator")
-async def set_channel(ctx: discord.ApplicationContext):
-    match db.set_channel(int(ctx.channel.id)):
-        case -1:
-            await ctx.respond("This channel is already set. Remove it with /removechannel.")
-        case 1:
-            await ctx.respond("An unexpected error occurred when setting the channel. Please try again.")
-        case 0:
-            await ctx.respond(f"Channel set. Voting commands are now accessible from this channel.")
+async def set_channel(ctx: discord.Interaction):
+    global valid_channel_ids
+    to_set = ctx.channel.id
+    if to_set in valid_channel_ids:
+        await ctx.respond("This channel is already set. Remove it with /removechannel.")
+        return
+    valid_channel_ids.append(ctx.channel.id)
+    await ctx.respond(f"Channel set. Voting commands are now accessible from this channel.")
+    print("-> Persisting new voting channel to database...")
+    db.persist_voting_channel(int(to_set))
+    print("-+ Channel added")
 
+"""
+/removechannel
+Removes a channel from the 'channels' collection, disallowing voting or logs in it.
+"""
 @bot.slash_command(
     name="removechannel",
     guild_ids=[GUILD_ID],
     description="MOD: Removes the current channel from the list of valid voting channels."
 )
 @commands.has_any_role("Moderator","Main Moderator")
-async def remove_channel(ctx: discord.ApplicationContext):
-    db.remove_channel(int(ctx.channel.id))
+async def remove_channel(ctx: discord.Interaction):
+    global valid_channel_ids
+    to_remove = int(ctx.channel.id)
+    if to_remove not in valid_channel_ids:
+        await ctx.respond("This channel has not been set for voting.")
+        print("-i Channel has not been set for voting, skipping")
+        return
+    valid_channel_ids.remove(to_remove)
     await ctx.respond("Voting commands are no longer accessible from this channel.")
+    print("-> Removing channel from database...")
+    db.remove_channel(int(ctx.channel.id))
+    print("-+ Channel removed")
 
+
+"""
+/setlogchannel
+Flags a channel to log voting and unvoting.
+Only one log channel can be set at a time.
+"""
 @bot.slash_command(
     name="setlogchannel",
     guild_ids=[GUILD_ID],
     description="MOD: flags the current channel for logging voting events."
 )
 @commands.has_any_role("Moderator","Main Moderator")
-async def set_log_channel(ctx: discord.ApplicationContext):
-    global log_channel_id 
-    log_channel_id = int(ctx.channel.id)
-    await ctx.respond("This channel has been flagged for logging events. Remove this flag with /removelogchannel.")
+async def set_log_channel(ctx: discord.Interaction):
+    cur_channel = int(ctx.channel.id)
+    global log_channel_ids
+    if cur_channel in log_channel_ids:
+        await ctx.respond("This channel is already set for logging. Remove it with /removelogchannel.")
+        return
 
+    log_channel_ids.append(cur_channel)
+    await ctx.respond("This channel has been flagged for logging events. Remove this flag with /removelogchannel.")
+    print("-> Persisting logging channel to database...")
+    db.persist_logging_channel(cur_channel)
+    print("-+ Channel added")
+
+"""
+/removelogchannel
+Deletes the flagged channel ID, disabling logging for it.
+"""
 @bot.slash_command(
     name="removelogchannel",
     guild_ids=[GUILD_ID],
     description="MOD: removes flag from the configured logging channel."
 )
 @commands.has_any_role("Moderator","Main Moderator")
-async def remove_log_channel(ctx: discord.ApplicationContext):
-    global log_channel_id
-    log_channel_id = -1
+async def remove_log_channel(ctx: discord.Interaction):
+    global log_channel_ids
+    to_remove = int(ctx.channel.id)
+    if to_remove not in log_channel_ids:
+        await ctx.respond("This channel does not have a logging flag to remove.")
+        print("-i Log channel not set, skipping")
+        return
+    log_channel_ids.remove(to_remove)
     await ctx.respond("Logging flag removed.")
+    print("-> Removing logging channel from database...")
+    db.remove_channel(int(ctx.channel.id))
+    print("-+ Channel removed")
 
-
-
+"""
+/shutdown
+Allows the bot owner to force a bot shutdown remotely.
+"""
 @bot.slash_command(
     name="shutdown",
     guild_ids=[GUILD_ID],

@@ -10,6 +10,7 @@ from mafia import Player
 load_dotenv()
 USER = os.getenv("MONGODB_USER")
 PASS = os.getenv("MONGODB_PASS")
+CHANNEL_COLLECTION = os.getenv("DB_CHANNEL_COLLECTION")
 # different db collections, one for dev env one for mafiacord
 COLLECTION = os.getenv("DB_COLLECTION")
 db_URL = f"mongodb+srv://{USER}:{PASS}@nanobot.lab1zmc.mongodb.net/"
@@ -22,39 +23,83 @@ def test_connection():
     except:
         return -1
     
-# sets channel for game.
-def set_channel(channel_id):
+# persists valid voting channel for game.
+def persist_voting_channel(channel_id):
     try:
         client = pymongo.MongoClient(db_URL)
         db = client["MafiaPlayers"]
-        channel = db["channel"]
+        channel = db[CHANNEL_COLLECTION]
         if len(dict(channel.find({"channel_id":channel_id}))) > 0:
             return -1
         
-        to_insert = {"channel_id":channel_id}
+        # type separates voting channels from logging channels
+        to_insert = {"channel_id":channel_id,"type":"voting"}
         channel.insert_one(to_insert)
-        print(f"Channel {channel_id} set")
         return 0
-
     except:
-        print("channel set failed")
+        print("failed")
+        return 1
+
+# fetches all valid channels
+def get_all_valid_channels():
+    try:
+        client = pymongo.MongoClient(db_URL)
+        db = client["MafiaPlayers"]
+        channel = db[CHANNEL_COLLECTION]
+        channel_list: list[dict] = channel.find({"type":"voting"}).to_list()
+        to_return = []
+        for c in channel_list:
+            to_return.append(c.get("channel_id"))
+
+        return to_return
+    
+    except:
+        return -1
+    
+def persist_logging_channel(channel_id):
+    try:
+        client = pymongo.MongoClient(db_URL)
+        db = client["MafiaPlayers"]
+        channel = db[CHANNEL_COLLECTION]
+        if len(dict(channel.find({"channel_id":channel_id}))) > 0:
+            return -1
+        
+        # type separates voting channels from logging channels
+        to_insert = {"channel_id":channel_id,"type":"logging"}
+        channel.insert_one(to_insert)
+        return 0
+    except:
         return 1
     
+def get_all_logging_channels():
+    try:
+        client = pymongo.MongoClient(db_URL)
+        db = client["MafiaPlayers"]
+        channel = db[CHANNEL_COLLECTION]
+        channel_list: list[dict] = channel.find({"type":"logging"}).to_list()
+        to_return = []
+        for c in channel_list:
+            to_return.append(c.get("channel_id"))
+
+        return to_return
+    
+    except:
+        return -1
+
 # checks if a given channel is on the list of valid channels for commands.
 def is_valid_channel(channel_id) -> bool:
     try:
         client = pymongo.MongoClient(db_URL)
         db = client["MafiaPlayers"]
-        channel = db["channel"]
+        channel = db[CHANNEL_COLLECTION]
 
-        ret = channel.find({})
-        for channel in ret:
-            if channel.get("channel_id") == channel_id:
+        ret: list[dict] = channel.find({})
+        for c in ret:
+            if c.get("channel_id") == channel_id:
                 return True
         return False
 
     except:
-        print("channel validation failed")
         return 1
 
 # remove a channel from list of valid channels.
@@ -62,10 +107,9 @@ def remove_channel(channel_id: int) -> int:
     try:
         client = pymongo.MongoClient(db_URL)
         db = client["MafiaPlayers"]
-        channel = db["channel"]
+        channel = db[CHANNEL_COLLECTION]
 
         channel.delete_one({"channel_id":channel_id})
-        print(f"Channel {channel_id} removed")
         return 0
 
     except Exception as e:
@@ -82,7 +126,6 @@ def is_playing(player_username) -> bool:
         return players.find_one({'username':player_username})
 
     except:
-        print("failed unexpectedly")
         return False
     
 def add_player(player_name, player_username, player_faction) -> int: 
@@ -98,11 +141,9 @@ def add_player(player_name, player_username, player_faction) -> int:
         
         new_player = Player(player_name, player_username, player_faction)
         players.insert_one(vars(new_player))
-        print(f"{player_name} ({player_username}) added to the game in faction {player_faction}")
         return 0
 
     except:
-        print("Player add failed")
         return 1
     
 def get_majority() -> int:
@@ -137,7 +178,6 @@ def get_all_players() -> list[Player]:
         
         return player_list
     except:
-        print("Player search failed")
         return []
     
 def is_majority(players: list[dict], player_name: str):
@@ -180,7 +220,7 @@ def vote(voter_username: str,voted_for_name: str) -> int:
         # this is necessary to update all_players with the new number of votes
         next(player for player in all_players if player["name"] == voted_for_name)["number_of_votes"] += voter_vote_value
 
-        print(f"{voter.get("name")} voted for {voted_for_player.get("name")}")
+
         return 1000 if is_majority(all_players,voted_for_name) else 0
 
     except Exception as e:
@@ -207,11 +247,9 @@ def unvote(voter_username) -> int:
         players.update_one({'name':unvoter_name},{'$set':{'voted_for':""}})
         players.update_one({'name':to_unvote_name},{'$inc':{'number_of_votes':int(-unvoter_vote_value)}})
 
-        print(f"{unvoter.get("name")} unvoted")
         return 0
 
     except:
-        print("Unvote failed")
         return 1
     
 def set_vote_value(name: str, value: int) -> int:
@@ -225,11 +263,9 @@ def set_vote_value(name: str, value: int) -> int:
             return -1
 
         players.update_one({"name":name},{"$set":{"vote_value":value}})
-        print(f"{name}'s vote value updated to {value}")
         return 0
 
     except Exception as e:
-        print(e)
         return 1
     
 def mod_add_vote(player_name: str, value: int) -> int:
@@ -243,7 +279,6 @@ def mod_add_vote(player_name: str, value: int) -> int:
             return -1
         
         all_players = players.find({}).to_list()
-        print(f"A mod added {value} vote{"s" if value > 1 else ""} to {player_name}")
         return 1000 if is_majority(all_players,player_name) else 0
 
     except Exception as e:
@@ -260,11 +295,9 @@ def end_day() -> int:
         players.update_many({},{'$set':{'votes':[]}})
         players.update_many({},{'$set':{'number_of_votes':0}})
 
-        print("Votes have been reset")
         return 0
 
     except:
-        print("day end failed")
         return 1
     
 #   Known issue: killing player does not reset their votes or others' votes. 
@@ -288,7 +321,6 @@ def kill_player(player_name) -> int:
 
 #       do the deed
         players.delete_one({'name':player_name})
-        print(f"{player_name} was killed")
         return 0
 
     except Exception as e:

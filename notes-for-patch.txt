@@ -1,12 +1,25 @@
-1. day functionality, resetting days, adding days, etc
-2. logging lynches/kills(?) in voting log
-3. remove case sensitivity from voting
-4. make playerinfo alphabetical order (why did you not do that before?) DONE
-
-
 ```MafiaBot Patch 1 Notes 10/2/24:
 1. Fixed a bug where some commands would succeed but would send the "failed unexpectedly" message (hopefully 100% gone but will be following up in the future)
 2. Removed case sensitivity from voting (but now can have lowercase in the vote message which is annoying, a permanent change will come after this mafia ends)
 3. Added line to /votecount which says how many votes are needed for majority
 4. Bot will now DM the mod when majority is reached
-5. Added some print statements in db execution to better check for errors```
+5. Bot now freezes timer once majority is reached, for recordkeeping purposes
+6. Added some print statements in db execution to better check for errors
+7. Added some custom messages while bot is processing commands```
+
+
+Stuff to add:
+1. day functionality, resetting days, adding days, etc, maybe?
+2. logging lynches/kills(?) in voting log, maybe?
+3. Add command to set the username of player to receive timer/majority DMs
+4. add lowercase version of each person's name in the DB to speed up calls and make case insensitivity much easier
+5. allow mods to create advanced voting rules for specific players - this one's gonna take a bit
+
+```MafiaBot Patch 2 Notes [date]:
+1. Added the ability to add or subtract time from the timer without having to reset the whole thing every time
+2. Removed some deprecated code I had accidentally been using
+3. Fixed a bug where if a vote command failed, it would occasionally not edit the original "sending your vote in..." message and thus never state why it had failed
+4. Reduced database calls and merged some database collections, improving bot response times for vote/unvote and setting/unsetting channels
+5. Added functionality for multiple log channels, because I can now so why not
+6. Added a rolling log of commands the bot prints to console to pinpoint when problems occur
+```
