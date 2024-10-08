@@ -7,20 +7,28 @@
 6. Added some print statements in db execution to better check for errors
 7. Added some custom messages while bot is processing commands```
 
-
-Stuff to add:
-1. day functionality, resetting days, adding days, etc, maybe?
-2. logging lynches/kills(?) in voting log, maybe?
-3. Add command to set the username of player to receive timer/majority DMs
-4. add lowercase version of each person's name in the DB to speed up calls and make case insensitivity much easier
-5. allow mods to create advanced voting rules for specific players - this one's gonna take a bit
-6. allow mod to toggle majority in case of stupid dumb players
-
-```MafiaBot Patch 2 Notes [date]:
+```MafiaBot Patch 2 Notes 10/4/2024:
 1. Added the ability to add or subtract time from the timer without having to reset the whole thing every time
 2. Removed some deprecated code I had accidentally been using
 3. Fixed a bug where if a vote command failed, it would occasionally not edit the original "sending your vote in..." message and thus never state why it had failed
 4. Reduced database calls and merged some database collections, improving bot response times for vote/unvote and setting/unsetting channels
 5. Added functionality for multiple log channels, because I can now so why not
 6. Added a rolling log of commands the bot prints to console to pinpoint when problems occur
+7. Added /togglemajority to continue a day without resetting votes
 ```
+
+Stuff to add:
+1. day functionality, resetting days, adding days, etc, maybe?
+2. logging lynches/kills(?) in voting log, maybe?
+3. Add command to set the username of player to receive timer/majority DMs
+4. add lowercase version of each person's name in the DB to speed up calls and make case insensitivity much easier DONE
+5. allow mods to create advanced voting rules for specific players - this one's gonna take a bit
+7. add short timeout period to votecount (and maybe checktime too) so people dont spam it
+
+
+```MafiaBot Patch 3 Notes [date]:
+1. Added more case-insensitive functionality, especially for mod commands
+2. Some code efficiency improvements, namely with /addplayer and /votecount
+3. Added 10-second delay timer for /votecount to prevent spam (not that this has been a problem...yet)
+```
+

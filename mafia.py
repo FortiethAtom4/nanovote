@@ -4,6 +4,7 @@
 class Player:
     def __init__(self,name: str, username: str, faction: str = "Town"):
         self.name = name
+        self.name_lower = name.lower() #for easier case-insensitive searches
         self.faction = faction
         self.username = username
         self.number_of_votes = 0 # this value is not necessarily equal to length of self.votes

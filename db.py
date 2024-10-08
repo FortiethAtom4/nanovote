@@ -163,26 +163,21 @@ def get_all_players() -> list[Player]:
         db = client["MafiaPlayers"]
         players = db[COLLECTION]
 
-        all_players = players.find({})
+        all_players = players.find({}).to_list()
+        ret_list: list[Player] = []
 
-        player_list = []
         for player in all_players:
-            player = dict(player)
-            temp = Player(player.get("name"),player.get("username"))
-            temp.set_faction(player.get("faction"))
-            temp.set_votes(player.get("votes"))
-            temp.set_vote_value(player.get("vote_value"))
-            temp.set_voted_for(player.get("voted_for"))
-            temp.set_number_of_votes(player.get("number_of_votes"))
-            player_list.append(temp)
+            # convert dicts to Player objects
+            temp = object.__new__(Player)
+            temp.__dict__ = player
+            ret_list.append(temp)
         
-        return player_list
+        return ret_list
     except:
         return []
     
 def is_majority(players: list[dict], player_name: str):
-    # total_votes = dict(players.find_one({'name':player_name})).get("number_of_votes")
-    total_votes = next(player for player in players if player["name"] == player_name).get("number_of_votes")
+    total_votes = next(player for player in players if (player["name"] == player_name or player["name_lower"] == player_name)).get("number_of_votes")
     total_players = len(players)
 
     return True if total_votes > (total_players/2) else False
@@ -207,19 +202,16 @@ def vote(voter_username: str,voted_for_name: str) -> int:
         
         # can't vote for players who don't exist
         # next((item for item in dicts if item["name"] == "Pam"), None)
-        voted_for_player = next((player for player in all_players if player["name"].casefold() == voted_for_name.casefold()),None)
+        voted_for_player = next((player for player in all_players if player["name"] == voted_for_name or player["name_lower"] == voted_for_name),None)
         if voted_for_player == None:
             return 2
         
-        voted_for_name = voted_for_player.get("name") # because the input value might be lowercase and db version is not
-
+        voted_for_name = voted_for_player.get("name") # because the input value might be lowercase
         players.update_one({'name':str(voted_for_name)},{'$push':{'votes':str(voter_name)}})
         players.update_one({'name':str(voter_name)},{'$set':{'voted_for':str(voted_for_name),}})
         players.update_one({'name':str(voted_for_name)},{'$inc':{'number_of_votes':int(voter_vote_value)}})
-        
         # this is necessary to update all_players with the new number of votes
         next(player for player in all_players if player["name"] == voted_for_name)["number_of_votes"] += voter_vote_value
-
 
         return 1000 if is_majority(all_players,voted_for_name) else 0
 
@@ -299,15 +291,14 @@ def end_day() -> int:
 
     except:
         return 1
-    
-#   Known issue: killing player does not reset their votes or others' votes. 
+     
 def kill_player(player_name) -> int:
     try:
         client = pymongo.MongoClient(db_URL)
         db = client["MafiaPlayers"]
         players = db[COLLECTION]
 
-        player = dict(players.find_one({"name":player_name}))
+        player = dict(players.find_one({"$or":[{"name":player_name},{"name_lower":player_name}]}))
 
 #       remove dead player's vote
         player_username = player.get("username")
@@ -320,6 +311,7 @@ def kill_player(player_name) -> int:
             unvote(their_username)
 
 #       do the deed
+        player_name = player.get("name") # in case they did lowercase
         players.delete_one({'name':player_name})
         return 0
 

@@ -35,6 +35,10 @@ timer_on: bool = False
 time_set_player = "" #sends a message to player who sets the timer
 majority: bool = False # for when majority is reached
 
+# To prevent spam, just going to be implemented in votecount for now
+command_delay_timer: datetime.timedelta = datetime.datetime.now()
+command_delay_seconds: int = 10 # Total seconds to delay
+
 # local lists of channel ids. Fetched when the bot starts.
 valid_channel_ids: list[int] = []
 log_channel_ids: list[int] = []
@@ -125,6 +129,24 @@ async def toggle_majority(ctx: discord.Interaction):
     global majority
     majority = not majority
     await ctx.respond(f"Majority check set to {majority}.",ephemeral=True)
+
+@bot.slash_command(
+    name="toggletimer",
+    guild_ids=[GUILD_ID],
+    description="MOD: Manually starts/stops the timer. Stopping the timer will display 'time is up' to your players."
+)
+@commands.has_any_role("Moderator","Main Moderator")
+async def toggle_timer(ctx: discord.Interaction):
+    global timer_on, end_time, cur_time
+    if end_time <= cur_time:
+        await ctx.respond("Timer cannot be toggled as no time has been set. Use /settimer first.")
+        return
+    temp_timer_time = end_time-cur_time
+    timer_on = not timer_on
+    if timer_on:
+        cur_time = datetime.datetime.now()
+        end_time = cur_time + temp_timer_time
+    await ctx.respond(f"Timer {("started" if timer_on else "stopped")}.",ephemeral=True)
 
 """ 
 /checktime
@@ -221,18 +243,27 @@ Also displays the number of votes needed for majority and remaining time.
     description="Gets all players in the game and their vote counts."
 )
 async def vote_count(ctx: discord.Interaction):
+    global command_delay_timer
+    time_rem: datetime.timedelta = command_delay_timer - datetime.datetime.now()
+    if time_rem > datetime.timedelta(seconds=0):
+        await ctx.respond(f"Please wait {time_rem.seconds} second{"" if time_rem.seconds == 1 else "s"} before using /votecount again.",ephemeral=True)
+        print("-+ Votecount spam prevented")
+        return
+
     initial_response = await ctx.respond("```ini\n[Tallying votes...]```")
+    print("-> Getting votecount...")
+
     players = db.get_all_players()
     majority_value = db.get_majority()
 
-    print("-> Getting votecount...")
     if len(players) == 0:
         await initial_response.edit(content="No players have been added yet.")
+        print("-i No players have been added yet")
         return
     
     response_string = "```ini\n[Votes:]\n"
 
-    players = sorted(players, key=lambda player:player.name.lower())
+    players = sorted(players, key=lambda player:player.name_lower)
     for player in players:
         response_string += player.to_string(False)+"\n"
 
@@ -253,6 +284,9 @@ async def vote_count(ctx: discord.Interaction):
     response_string += "```"
     print("-+ Sent votecount")
     await initial_response.edit(content=response_string)
+    # increment anti-spam timer
+    global command_delay_seconds
+    command_delay_timer = datetime.datetime.now() + datetime.timedelta(seconds=command_delay_seconds)
 
 """ 
 /playerinfo
@@ -290,34 +324,41 @@ Will display a special message and disable voting commands if a majority is reac
     description="Vote for a player to be lynched."
 )
 async def vote(ctx: discord.Interaction, voted_for_name: str):
-    initial_response = await ctx.respond("Sending your vote in...")
+
     global valid_channel_ids
     if ctx.channel.id in valid_channel_ids:
         global majority
         if majority:
-            await initial_response.edit(content="Majority has been reached. Voting commands have been disabled.")
+            await ctx.respond("Majority has been reached. Voting commands have been disabled.")
+            print("-i Majority reached, voting commands have been disabled")
             return
         
         global timer_on
         if not timer_on:
-            await initial_response.edit(content="Time is up. Voting commands have been disabled.")
+            await ctx.respond("Time is up. Voting commands have been disabled.")
+            print("-i Time is up, voting commands have been disabled")
             return
         
         username = ctx.user.name
         if not db.is_playing(username):
-            await initial_response.edit(content="You are not alive in this game!")
+            await ctx.respond("You are not alive in this game!")
+            print(f"-i Non-participating player {ctx.user.name} cannot vote")
             return
         
+        initial_response = await ctx.respond("Sending your vote in...")
         global log_channel_ids
         voter_name = db.get_name_from_username(username)
         print(f"-> Sending in {voter_name}'s vote on {voted_for_name}...")
         match(db.vote(username,voted_for_name)):
             case -1:
                 await initial_response.edit(content=f"You have already voted!")
+                print(f"-i Player {ctx.user.name} has already voted")
             case 2:
                 await initial_response.edit(content=f"Player \'{voted_for_name}\' does not exist. Please check your spelling and try again.")
+                print(f"-i Player'{voted_for_name}' does not exist")
             case 1:
                 await initial_response.edit(content=f"There was an unexpected error when processing vote for {voted_for_name}. Please try again.")
+                print(f"-- An unexpected error occurred when sending in {ctx.user.name}'s vote for {voted_for_name}")
             case 1000:
                 timer_on = False
                 majority = True
@@ -339,6 +380,7 @@ async def vote(ctx: discord.Interaction, voted_for_name: str):
                 print(f"-+ {voter_name} voted for {voted_for_name}")
     else:
         await initial_response.edit(content="Mafia commands are not allowed in this channel. Please ask an admin to use /setchannel or use the appropriate channels.")
+        print("-i Vote sent in from a channel not flagged for voting commands, ignoring")
 
 """ 
 /unvote
@@ -351,25 +393,27 @@ Unvotes will be logged in a configured log channel.
     description="Revoke your vote on a player."
 )
 async def unvote(ctx: discord.Interaction):
-    initial_response = await ctx.respond("Pretending to do work...")
-
     global valid_channel_ids
     if ctx.channel.id in valid_channel_ids:
         global majority
         if majority:
-            await initial_response.edit(content="Majority has been reached. Voting commands have been disabled.")
+            await ctx.respond("Majority has been reached. Voting commands have been disabled.")
+            print("-i Majority reached, voting commands have been disabled")
             return
         
         global timer_on
         if not timer_on:
-            await initial_response.edit(content="Time is up. Voting commands have been disabled.")
+            await ctx.respond("Time is up. Voting commands have been disabled.")
+            print("-i Time is up, voting commands have been disabled")
             return
         
         username = ctx.user.name
         if not db.is_playing(username):
-            await initial_response.edit(content="You are not alive in this game!")
+            await ctx.respond("You are not alive in this game!")
+            print(f"-i Non-participating player {ctx.user.name} cannot unvote")
             return 
         
+        initial_response = await ctx.respond("Pretending to do work...")
         unvoter_name = db.get_name_from_username(username)
         print(f"-> {unvoter_name} is unvoting...")
         match(db.unvote(username)):
@@ -377,7 +421,7 @@ async def unvote(ctx: discord.Interaction):
                 print("-- An error occurred when processing unvote")
                 await initial_response.edit(content="There was an unexpected error when processing your unvote. Please try again.")
             case -1:
-                print(f"-i {unvoter_name} has not voted, aborting")
+                print(f"-i {unvoter_name} has not voted")
                 await initial_response.edit(content="You haven't voted for anyone yet.")
             case 0:
                 await initial_response.edit(content="You unvoted.")
@@ -390,6 +434,7 @@ async def unvote(ctx: discord.Interaction):
                 print(f"-+ {unvoter_name} unvoted")
     else:
         await ctx.respond("Mafia commands are not allowed in this channel. Please ask an admin to use /setchannel or use the appropriate channels.")
+        print("-i Unvote sent in from a channel not flagged for voting commands, ignoring")
 
 """
 /kill
@@ -508,6 +553,7 @@ async def set_channel(ctx: discord.Interaction):
     to_set = ctx.channel.id
     if to_set in valid_channel_ids:
         await ctx.respond("This channel is already set. Remove it with /removechannel.")
+        print("-i Channel already set")
         return
     valid_channel_ids.append(ctx.channel.id)
     await ctx.respond(f"Channel set. Voting commands are now accessible from this channel.")
@@ -555,6 +601,7 @@ async def set_log_channel(ctx: discord.Interaction):
     global log_channel_ids
     if cur_channel in log_channel_ids:
         await ctx.respond("This channel is already set for logging. Remove it with /removelogchannel.")
+        print("-i Channel already set")
         return
 
     log_channel_ids.append(cur_channel)
