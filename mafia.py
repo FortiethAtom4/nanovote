@@ -1,5 +1,6 @@
 # representation of a mafia game.
 
+common_currency_id = "2f85db1c-ef92-4bbc-89dc-ccdcdef0ad94"
 
 class Player:
     def __init__(self,name: str, username: str, faction: str = "Town"):
@@ -48,3 +49,59 @@ class Player:
 
     def set_voted_for(self,name):
         self.voted_for = name
+
+class Item:
+    @staticmethod
+    def load_item_from_db_entry(item):
+        return Item(item.get("item_name"), item.get("price"), item.get("type"))
+
+    def __init__(self,item_name: str, price: int, type:int):
+        self.item_name = item_name
+        self.price = price
+        # type 0 is non targeted
+        # type 1 is targeted
+        self.type = type
+
+    def get_item_name(self):
+        return self.item_name
+
+    def get_price(self):
+        return self.price
+
+    def get_type(self):
+        return self.type
+    
+    def get_shop_display(self):
+        return "[" + self.get_item_name() + ": " + str(self.get_price()) + "]"
+    
+    def get_db_form(self):
+        return { "item_name": self.get_item_name(), "price": self.get_price(), "type": self.get_type() }
+    
+class Wallet:
+    @staticmethod
+    def load_wallet_from_db_entry(entry):
+        return Wallet(entry.get("username"), entry.get("amount"))
+
+    def __init__(self,username: str,amount:int):
+        self.username = username
+        self.amount = amount
+
+    def is_common(self):
+        return self.username == common_currency_id
+    
+    def get_username(self):
+        return self.username
+    
+    def get_amount(self):
+        return self.amount
+    
+    def can_add_currency(self, amount):
+        return self.get_amount() + amount >= 0
+    
+    def get_db_form(self):
+        return { "username": self.get_username(), "amount": self.get_amount() }
+    
+    def get_list_display(self):
+        if self.is_common():
+            return "[Common wallet: " + str(self.amount) + "]"
+        return "[" + self.get_username() + ": " + str(self.amount) + "]"

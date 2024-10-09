@@ -5,6 +5,7 @@ from discord.ext import commands, tasks
 from dotenv import load_dotenv
 import datetime
 from asyncio import sleep
+from mafia import Item
 
 # local imports
 import db
@@ -475,7 +476,7 @@ Subtraction is done with negative numbers.
 )
 @commands.has_any_role("Moderator","Main Moderator")
 async def add_votes(ctx: discord.Interaction, player_name: str, value: int):
-    print(f"-> Adding {value} vote{"s" if value is not abs(1) else ""} to {player_name}...")
+    print(f"-> Adding {value} vote{'s' if value is not abs(1) else ''} to {player_name}...")
     match db.mod_add_vote(player_name,value):
         case 1:
             print(f"-- An unexpected error occurred when adding votes")
@@ -599,6 +600,149 @@ Allows the bot owner to force a bot shutdown remotely.
 async def shutdown(ctx: discord.ApplicationContext):
     await ctx.respond("Shutting down...")
     exit()
+
+# Shop
+@bot.slash_command(
+    name="additem",
+    guild_ids=[GUILD_ID],
+    description="MOD: Adds an item to the shop."
+)
+@commands.has_any_role("Moderator","Main Moderator")
+async def add_item_to_shop(ctx: discord.Interaction, item_name: str, price: int, type: int):
+    initial_response = await ctx.respond("```ini\n[Adding item...]```", ephemeral=True)
+    print(f"Adding {item_name} with price {price} to the shop...")
+    match db.add_item_to_shop(Item(item_name, price, type)):
+        case 0:
+            print("-+ Item added successfully")
+            await initial_response.edit(content="Item successfully added.")
+        case -1:
+            print(f"-i Item aleady in shop, aborting")
+            await initial_response.edit(content="Item cannot be added because it is already in the shop")
+    return
+
+@bot.slash_command(
+    name="getitems",
+    guild_ids=[GUILD_ID],
+    description="Get item list."
+)
+async def get_items(ctx: discord.Interaction):
+    initial_response = await ctx.respond("```ini\n[Loading items...]```")
+    items = db.get_all_items_in_shop()
+
+    print("-> Getting shop...")
+    if len(items) == 0:
+        await initial_response.edit(content="Shop is empty...")
+        return
+    
+    response_string = "```ini\n[Purchasable Wares:]\n"
+
+    items = sorted(items, key=lambda item:item.get_item_name().lower())
+    for item in items:
+        response_string += item.get_shop_display() +"\n"
+    response_string += "```"
+    print("-> Shop sent")
+    await initial_response.edit(content=response_string)
+
+"""
+/clearshop
+Clears the shop.
+"""
+@bot.slash_command(
+    name="clearshop",
+    guild_ids=[GUILD_ID],
+    description="MOD: Clears the shop."
+)
+@commands.has_any_role("Moderator","Main Moderator")
+async def clear_shop(ctx: discord.Interaction):
+    await ctx.response.defer(ephemeral=True)
+
+    print(f"-> Clearing shop...")
+    match db.clear_shop():
+        case 1:
+            print(f"-- An error occurred when trying to clear the shop")
+            await ctx.respond("There was an unexpected error trying to clear the shop. Please try again.",ephemeral=True)
+
+        case 0:
+            print("-+ Successfully cleared shop")
+            await ctx.respond(f"Shop has been successfully cleared.",ephemeral=True)
+
+"""
+/getcommoncurrency
+Gets common currency.
+"""
+@bot.slash_command(
+    name="getcommoncurrency",
+    guild_ids=[GUILD_ID],
+    description="Gets common available currency."
+)
+async def get_common_currency(ctx: discord.Interaction):
+    initial_response = await ctx.respond("```ini\n[Getting currency...]```")
+
+    common_currency = db.get_common_currency()
+    
+    await initial_response.edit(content=f"```diff\n+You currently have {common_currency} of the currency.```")
+
+"""
+/getmycurrency
+Gets your currency.
+"""
+@bot.slash_command(
+    name="getmycurrency",
+    context="bot_dm",
+    description="Gets your available currency."
+)
+async def get_common_currency(ctx: discord.Interaction):
+    initial_response = await ctx.respond("```ini\n[Getting currency...]```")
+
+    currency = db.get_currency(ctx.user.name)
+    
+    await initial_response.edit(content=f"```diff\n+You, {ctx.user.name}, currently have {currency} of the currency.```")
+
+"""
+/addcurrency
+Adds currency to a player's wallet.
+"""
+@bot.slash_command(
+    name="addcurrency",
+    guild_ids=[GUILD_ID],
+    description="MOD: Adds some currency to a player."
+)
+@commands.has_any_role("Moderator","Main Moderator")
+async def add_currency(ctx: discord.Interaction, username: str, amount: int):
+    initial_response = await ctx.respond(f"Adding {amount} to {username}'s pockets...",ephemeral=True)
+
+    print(f"-> Adding {amount} to {username}'s pockets...")
+
+    db.add_currency(username, amount)
+    print("-+ Wallet successfully added")
+
+    await initial_response.edit(content=f"Successfully added {amount} to {username}'s pockets...")
+    return
+
+"""
+/getallwallets
+Gets all wallets
+Includes name, Discord username, and their faction.
+"""
+@bot.slash_command(
+    name="getallwallets",
+    guild_ids=[GUILD_ID],
+    description="MOD: Adds some currency to a player."
+)
+@commands.has_any_role("Moderator","Main Moderator")
+async def add_currency(ctx: discord.Interaction):
+    initial_response = await ctx.respond("```ini\n[Loading wallets...]```",ephemeral=True)
+
+    response_string = "```ini\n[Wallets:]\n"
+
+    wallets = db.get_all_wallets()
+    wallets = sorted(wallets, key=lambda item: "0" if item.is_common() else item.get_username().lower())
+    for item in wallets:
+        response_string += item.get_list_display() +"\n"
+    response_string += "```"
+    print("-> Wallets sent")
+    await initial_response.edit(content=response_string)
+
 
 # run the bot
 bot.run(TOKEN)

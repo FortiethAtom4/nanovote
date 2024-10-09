@@ -5,15 +5,20 @@ import pymongo.collection
 from math import trunc
 
 # local imports
-from mafia import Player
+from mafia import Player, Item, Wallet, common_currency_id
 
 load_dotenv()
 USER = os.getenv("MONGODB_USER")
 PASS = os.getenv("MONGODB_PASS")
-CHANNEL_COLLECTION = os.getenv("DB_CHANNEL_COLLECTION")
+
 # different db collections, one for dev env one for mafiacord
+SERVER_NAME = os.getenv("SERVER_NAME")
+CHANNEL_COLLECTION = os.getenv("DB_CHANNEL_COLLECTION")
 COLLECTION = os.getenv("DB_COLLECTION")
-db_URL = f"mongodb+srv://{USER}:{PASS}@nanobot.lab1zmc.mongodb.net/"
+SHOP = os.getenv("DB_SHOP_COLLECTION")
+WALLETS = os.getenv("DB_CURRENCY_COLLECTION")
+
+db_URL = f"mongodb+srv://{USER}:{PASS}@{SERVER_NAME}.mongodb.net/"
 
 # tests connection to database.
 def test_connection():
@@ -338,3 +343,102 @@ def get_name_from_username(username: str):
     except Exception as e:
         print(e)
         return ""
+    
+def add_item_to_shop(item: Item):
+    client = pymongo.MongoClient(db_URL)
+    db = client["MafiaPlayers"]
+    shop = db[SHOP]
+
+    isnewitem = list(shop.find({"item_name":item.get_item_name()}))
+    if len(isnewitem) != 0:
+        return -1
+
+    shop.insert_one(item.get_db_form())
+
+    return 0
+
+def get_all_items_in_shop():
+    try:
+        client = pymongo.MongoClient(db_URL)
+        db = client["MafiaPlayers"]
+        shop = db[SHOP]
+
+        all_items = shop.find({})
+        
+        items_list = []
+        for item in all_items:
+            items_list.append(Item.load_item_from_db_entry(item))
+        
+        return items_list
+    except:
+        return []
+    
+def clear_shop():
+    try:
+        client = pymongo.MongoClient(db_URL)
+        db = client["MafiaPlayers"]
+        shop = db[SHOP]
+
+        #Removes all items
+        shop.delete_many({})
+        return 0
+
+    except Exception as e:
+        print(e)
+        return 1
+    
+def get_common_currency():
+    client = pymongo.MongoClient(db_URL)
+    db = client["MafiaPlayers"]
+    currency = db[WALLETS]
+
+    try:
+        common_currency = currency.find_one({"username": common_currency_id})
+
+        return common_currency.get("amount")
+    except:
+        currency.insert_one(Wallet(common_currency_id, 0).get_db_form())
+
+        return 0
+    
+def get_currency(username: str):
+    client = pymongo.MongoClient(db_URL)
+    db = client["MafiaPlayers"]
+    currency = db[WALLETS]
+
+    try:
+        common_currency = currency.find_one({"username": username})
+
+        return common_currency.get("amount")
+    except:
+        currency.insert_one(Wallet(username, 0).get_db_form())
+
+        return 0
+    
+def add_currency(username: str, amount: int):
+    client = pymongo.MongoClient(db_URL)
+    db = client["MafiaPlayers"]
+    currencies = db[WALLETS]
+
+    # Increases a player's wallet by amount, creates one if it does not exist
+    currencies.find_one_and_update(
+        {"username": username},
+        {"$inc": {"amount": amount}},
+        upsert=True
+    )
+
+def get_all_wallets():
+    try:
+        client = pymongo.MongoClient(db_URL)
+        db = client["MafiaPlayers"]
+        wallets = db[WALLETS]
+
+        all_wallets = wallets.find({})
+
+        wallets_list = []
+        for item in all_wallets:
+            wallets_list.append(Wallet.load_wallet_from_db_entry(item))
+        
+        return wallets_list
+    except:
+        return []
