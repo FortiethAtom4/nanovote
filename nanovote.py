@@ -81,8 +81,9 @@ async def do_timer():
             cur_time = datetime.datetime.now()
             if cur_time >= end_time:
                 global time_set_player
-                user = await bot.fetch_user(time_set_player)
-                await user.send("Your timer is up!")
+                if time_set_player != "":
+                    user = await bot.fetch_user(time_set_player)
+                    await user.send("Your timer is up!")
                 timer_on = False
         await sleep(1)
     
@@ -119,6 +120,9 @@ async def set_timer(ctx: discord.ApplicationContext, time_hours: int, time_minut
     print(f"-+ Timer set to {tmp_format_time} by {bot.get_user(time_set_player)}")
     await ctx.respond(f"Timer has been set to **{tmp_format_time}**, starting now. You will be sent a DM when time is up or if a majority is reached.")
 
+'''
+/togglemajority
+'''
 @bot.slash_command(
     name="togglemajority",
     guild_ids=[GUILD_ID],
@@ -126,7 +130,7 @@ async def set_timer(ctx: discord.ApplicationContext, time_hours: int, time_minut
 )
 @commands.has_any_role("Moderator","Main Moderator")
 async def toggle_majority(ctx: discord.Interaction):
-    global majority, timer_on
+    global majority, timer_on, time_set_player
     majority = not majority
     if not timer_on:
         timer_on = True
@@ -280,9 +284,9 @@ async def vote_count(ctx: discord.Interaction):
     global end_time, cur_time
     tmp_format_time = datetime.timedelta(seconds=int((end_time - cur_time).total_seconds()))
     if timer_on:
-        response_string += f"[Time remaining: {tmp_format_time}]\n"
+        response_string += f"[{(f"Time remaining: {tmp_format_time}" if tmp_format_time > datetime.timedelta(seconds=0) else "Time is up!")}]\n"
     else:
-        response_string += f"[Time remaining when majority was reached: {tmp_format_time}]\n" if majority else "[Time is up!]\n"
+        response_string += f"[Time remaining when majority was reached: {(tmp_format_time if tmp_format_time > datetime.timedelta(seconds=0) else datetime.timedelta(seconds=0))}]\n" if majority else "[Time is up!]\n"
     response_string += "```"
     print("-+ Sent votecount")
     await initial_response.edit(content=response_string)
