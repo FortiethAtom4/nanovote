@@ -17,6 +17,12 @@
 7. Added /togglemajority to continue a day without resetting votes
 ```
 
+```MafiaBot Patch 3 Notes 10/8/24:
+1. Added more case-insensitive functionality, especially for mod commands
+2. Some code efficiency improvements, namely with /addplayer and /votecount
+3. Added 10-second delay timer for /votecount to prevent spam (not that this has been a problem...yet)
+```
+
 Stuff to add:
 1. day functionality, resetting days, adding days, etc, maybe?
 2. logging lynches/kills(?) in voting log, maybe?
@@ -26,9 +32,4 @@ Stuff to add:
 7. add short timeout period to votecount (and maybe checktime too) so people dont spam it
 
 
-```MafiaBot Patch 3 Notes [date]:
-1. Added more case-insensitive functionality, especially for mod commands
-2. Some code efficiency improvements, namely with /addplayer and /votecount
-3. Added 10-second delay timer for /votecount to prevent spam (not that this has been a problem...yet)
-```
 
