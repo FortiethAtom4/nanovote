@@ -126,9 +126,11 @@ async def set_timer(ctx: discord.ApplicationContext, time_hours: int, time_minut
 )
 @commands.has_any_role("Moderator","Main Moderator")
 async def toggle_majority(ctx: discord.Interaction):
-    global majority
+    global majority, timer_on
     majority = not majority
-    await ctx.respond(f"Majority check set to {majority}.",ephemeral=True)
+    if not timer_on:
+        timer_on = True
+    await ctx.respond(f"Majority flag set to `{majority}`.",ephemeral=True)
 
 @bot.slash_command(
     name="toggletimer",
@@ -379,7 +381,7 @@ async def vote(ctx: discord.Interaction, voted_for_name: str):
                     await log_channel.send(f"[(LINK TO MESSAGE)]({resp.jump_url}) {voter_name} voted for {voted_for_name}.")
                 print(f"-+ {voter_name} voted for {voted_for_name}")
     else:
-        await initial_response.edit(content="Mafia commands are not allowed in this channel. Please ask an admin to use /setchannel or use the appropriate channels.")
+        await ctx.respond(content="Mafia commands are not allowed in this channel. Please ask an admin to use /setchannel or use the appropriate channels.")
         print("-i Vote sent in from a channel not flagged for voting commands, ignoring")
 
 """ 
