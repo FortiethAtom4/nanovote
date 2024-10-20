@@ -15,6 +15,13 @@ command_delay_seconds: int = 10 # Total seconds to delay
 valid_channel_ids: list[int] = []
 log_channel_ids: list[int] = []
 
+# my test server ID
+# dev_guild_id = 825590571606999040
+
+# mafia server ID
+# mafia_guild_id = 911178268332404756
+
 # db env
 dotenv.load_dotenv(dotenv.find_dotenv(usecwd=True))
+TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD_ID = int(os.getenv('GUILD_ID'))

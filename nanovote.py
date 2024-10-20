@@ -1,25 +1,12 @@
-import os
-import logging
 import discord
-from discord.ext import commands, tasks
-from dotenv import load_dotenv
+from discord.ext import commands
 import datetime
 from asyncio import sleep
 
 # local imports
 import db, config
 
-# my test server ID
-# dev_guild_id = 825590571606999040
-
-# mafia server ID
-# mafia_guild_id = 911178268332404756
-
-load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
-GUILD_ID = os.getenv('GUILD_ID')
 intents = discord.Intents.all() 
-
 bot = commands.Bot(intents=intents)
 bot.load_extensions("cogs.player_commands","cogs.mod_commands")
 
@@ -48,6 +35,7 @@ async def on_ready():
     print("-> Retrieving logging channels...")
     config.log_channel_ids = db.get_all_logging_channels()
     print("-+ Ready\n")
+    
 # checks and updates the time. Used for keeping track of day/night time
 @bot.event
 async def do_timer():
@@ -78,4 +66,4 @@ async def shutdown(ctx: discord.ApplicationContext):
 
 bot.loop.create_task(do_timer())
 # run the bot
-bot.run(TOKEN)
+bot.run(config.TOKEN)
