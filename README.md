@@ -44,5 +44,3 @@ Mod-only commands:
 KNOWN BUGS:
 1. setting a player's vote value after they have voted does not update any current votes.
     - e.g. My vote value is 1. I vote for Bennett. My vote value is then set to 2. My vote on Bennett is still 1 and won't change unti I unvote and re-vote.
-
-2. /unvote does not work properly with negative votes.
