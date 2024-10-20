@@ -12,6 +12,7 @@ class Player:
         self.voted_for = ""
         self.vote_value = 1 # used for doublevoters, negative voters, etc.
 
+
 #   default faction is "Town," so this method sets to other factions.
     def set_faction(self,faction: str):
         self.faction = faction
