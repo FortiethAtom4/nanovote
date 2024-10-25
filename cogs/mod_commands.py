@@ -271,10 +271,10 @@ class ModCommands(commands.Cog):
             await ctx.respond("This channel is already set. Remove it with /removechannel.")
             print("-i Channel already set")
             return
+        print("-> Persisting new voting channel to database...")
         config.valid_channel_ids.append(ctx.channel.id)
         await ctx.respond(f"Channel set. Voting commands are now accessible from this channel.")
-        print("-> Persisting new voting channel to database...")
-        db.persist_voting_channel(int(to_set))
+
         print("-+ Channel added")
 
 
@@ -294,10 +294,10 @@ class ModCommands(commands.Cog):
             await ctx.respond("This channel has not been set for voting.")
             print("-i Channel has not been set for voting, skipping")
             return
+        print("-> Removing channel from database...")
         config.valid_channel_ids.remove(to_remove)
         await ctx.respond("Voting commands are no longer accessible from this channel.")
-        print("-> Removing channel from database...")
-        db.remove_channel(int(ctx.channel.id))
+
         print("-+ Channel removed")
 
     """
@@ -318,10 +318,9 @@ class ModCommands(commands.Cog):
             print("-i Channel already set")
             return
 
+        print("-> Persisting logging channel to database...")
         config.log_channel_ids.append(cur_channel)
         await ctx.respond("This channel has been flagged for logging events. Remove this flag with /removelogchannel.")
-        print("-> Persisting logging channel to database...")
-        db.persist_logging_channel(cur_channel)
         print("-+ Channel added")
 
     """
@@ -340,10 +339,10 @@ class ModCommands(commands.Cog):
             await ctx.respond("This channel does not have a logging flag to remove.")
             print("-i Log channel not set, skipping")
             return
+        
+        print("-> Removing logging channel from database...")
         config.log_channel_ids.remove(to_remove)
         await ctx.respond("Logging flag removed.")
-        print("-> Removing logging channel from database...")
-        db.remove_channel(int(ctx.channel.id))
         print("-+ Channel removed")
 
 

@@ -112,7 +112,7 @@ class PlayerCommands(commands.Cog):
             return
         
         initial_response = await ctx.respond("Sending your vote in...")
-        voter_name = db.get_name_from_username(username)
+        voter_name = next(player for player in config.players if player.username == username).name
         print(f"-> Sending in {voter_name}'s vote on {voted_for_name}...")
         match(db.vote(username,voted_for_name)):
             case -1:
@@ -178,7 +178,7 @@ class PlayerCommands(commands.Cog):
             return 
         
         initial_response = await ctx.respond("Striking thy name from the archives...")
-        unvoter_name = db.get_name_from_username(username)
+        unvoter_name = next(player for player in config.players if player.username == username).name
         print(f"-> {unvoter_name} is unvoting...")
         match(db.unvote(username)):
             case 1:

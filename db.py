@@ -14,23 +14,6 @@ def test_connection():
     except:
         return -1
     
-# persists valid voting channel for game.
-def persist_voting_channel(channel_id):
-    try:
-        client = pymongo.MongoClient(config.db_URL)
-        db = client["MafiaPlayers"]
-        channel = db[config.CHANNEL_COLLECTION]
-        if len(dict(channel.find({"channel_id":channel_id}))) > 0:
-            return -1
-        
-        # type separates voting channels from logging channels
-        to_insert = {"channel_id":channel_id,"type":"voting"}
-        channel.insert_one(to_insert)
-        return 0
-    except:
-        print("failed")
-        return 1
-
 # fetches all valid channels
 def get_all_valid_channels():
     try:
@@ -46,21 +29,6 @@ def get_all_valid_channels():
     
     except:
         return -1
-    
-def persist_logging_channel(channel_id):
-    try:
-        client = pymongo.MongoClient(config.db_URL)
-        db = client["MafiaPlayers"]
-        channel = db[config.CHANNEL_COLLECTION]
-        if len(dict(channel.find({"channel_id":channel_id}))) > 0:
-            return -1
-        
-        # type separates voting channels from logging channels
-        to_insert = {"channel_id":channel_id,"type":"logging"}
-        channel.insert_one(to_insert)
-        return 0
-    except:
-        return 1
     
 def get_all_logging_channels():
     try:
@@ -80,21 +48,6 @@ def get_all_logging_channels():
 # checks if a given channel is on the list of valid channels for commands.
 def is_valid_channel(channel_id) -> bool:
     return True if channel_id in config.valid_channel_ids else False
-
-
-# remove a channel from list of valid channels.
-def remove_channel(channel_id: int) -> int:
-    try:
-        client = pymongo.MongoClient(config.db_URL)
-        db = client["MafiaPlayers"]
-        channel = db[config.CHANNEL_COLLECTION]
-
-        channel.delete_one({"channel_id":channel_id})
-        return 0
-
-    except Exception as e:
-        print("channel remove failed:\n",e)
-        return 1
 
     
 def is_playing(player_username) -> bool:
@@ -166,7 +119,6 @@ def vote(voter_username: str,voted_for_name: str) -> int:
     
 def unvote(voter_username) -> int:
     unvoter: Player = next(player for player in config.players if player.username == voter_username)
-    print(f"unvoter: {unvoter.username}")
     
 #   havent voted for anybody yet
     if unvoter.voted_for == "":
@@ -234,10 +186,6 @@ def kill_player(player_name: str) -> int:
 #   do the deed
     config.players.remove(player_to_kill)
     return 0
-
-# obsolete, remove soon
-def get_name_from_username(username: str):
-    return next(player for player in config.players if player.username == username).name
 
 def persist_updates():
     try:

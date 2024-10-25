@@ -10,6 +10,7 @@ intents = discord.Intents.all()
 bot = commands.Bot(intents=intents)
 bot.load_extensions("cogs.player_commands","cogs.mod_commands")
 
+
 # why did i waste my time adding this
 print("""---------##---------
 -------######-------
@@ -51,24 +52,25 @@ async def do_timer():
                 config.timer_on = False
         await sleep(1)
 
-# updates the database every 30 seconds
+# updates the database every 2 minutes
 @bot.event
 async def do_update():
-    update_time: datetime.timedelta = datetime.datetime.now() + datetime.timedelta(seconds=30)
+    update_interval: int = 120 # number of seconds to wait between updates
+    update_time: datetime.timedelta = datetime.datetime.now() + datetime.timedelta(seconds=update_interval)
     cur_update_time = datetime.datetime.now()
     while True:
         cur_update_time = datetime.datetime.now()
         if cur_update_time >= update_time:
-            print("-> Persisting updates...")
+            print(f"-> {datetime.datetime.today()} Persisting updates...")
             db.persist_updates()
-            print("-+ Updates completed.")
-            update_time = datetime.datetime.now() + datetime.timedelta(seconds=30)
+            print(f"-+ {datetime.datetime.today()} Updates completed.")
+            update_time = datetime.datetime.now() + datetime.timedelta(seconds=update_interval)
         await sleep(1)
 
 
 """
 /shutdown
-Allows the bot owner to force a bot shutdown remotely.
+Allows the bot owner to force a bot shutdown remotely. Saves all mafia data before closing.
 """
 @bot.slash_command(
     name="shutdown",
