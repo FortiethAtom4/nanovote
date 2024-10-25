@@ -31,7 +31,7 @@ Stuff to add:
 5. allow mods to create advanced voting rules for specific players - this one's gonna take a bit
 7. add short timeout period to votecount (and maybe checktime too) so people dont spam it DONE
 
-```MafiaBot Patch 3 Notes [date]:
+```MafiaBot Patch 3 Notes 10/24/24:
 1. Massive code reorganization which took forever and made the bot super modular and cool, not that you normies care
 2. Complete rework of database access methods, added new database update coroutine which makes commands lightning-fast
 3. Added short timeout period to votecount to prevent spam

@@ -217,9 +217,9 @@ def end_day() -> int:
     return 0
 
      
-def kill_player(player_name) -> int:
+def kill_player(player_name: str) -> int:
 
-    player_to_kill: Player = next(player for player in config.players if player.name.lower() == player_name)
+    player_to_kill: Player = next(player for player in config.players if player.name.lower() == player_name.lower())
 
 #   remove dead player's vote
     if player_to_kill.voted_for != "":
