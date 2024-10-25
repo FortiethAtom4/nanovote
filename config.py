@@ -1,4 +1,5 @@
 import datetime, dotenv, os
+from mafia import Player
 
 # global time variables
 cur_time = datetime.datetime.now()
@@ -15,6 +16,8 @@ command_delay_seconds: int = 10 # Total seconds to delay
 valid_channel_ids: list[int] = []
 log_channel_ids: list[int] = []
 
+# player list fetched at bot start
+players: list[Player] = []
 # my test server ID
 # dev_guild_id = 825590571606999040
 
@@ -25,3 +28,9 @@ log_channel_ids: list[int] = []
 dotenv.load_dotenv(dotenv.find_dotenv(usecwd=True))
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD_ID = int(os.getenv('GUILD_ID'))
+USER = os.getenv("MONGODB_USER")
+PASS = os.getenv("MONGODB_PASS")
+CHANNEL_COLLECTION = os.getenv("DB_CHANNEL_COLLECTION")
+# different db collections, one for dev env one for mafiacord
+COLLECTION = os.getenv("DB_COLLECTION")
+db_URL = f"mongodb+srv://{USER}:{PASS}@nanobot.lab1zmc.mongodb.net/"

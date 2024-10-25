@@ -45,25 +45,26 @@ class PlayerCommands(commands.Cog):
         initial_response = await ctx.respond("```ini\n[Tallying votes...]```")
         print("-> Getting votecount...")
 
-        players = db.get_all_players()
-        majority_value = db.get_majority()
-
-        if len(players) == 0:
+        majority_value = int(db.get_majority())
+        
+        if len(config.players) == 0:
             await initial_response.edit(content="No players have been added yet.")
             print("-i No players have been added yet")
             return
         
+        players_sorted = sorted(config.players, key=lambda player:player.name_lower)
+        
         response_string = "```ini\n[Votes:]\n"
 
-        players = sorted(players, key=lambda player:player.name_lower)
-        for player in players:
+        
+        for player in players_sorted:
             response_string += player.to_string(False)+"\n"
 
         if config.majority:
             config.timer_on = False
             response_string += "\n[A majority has been reached.]\n"
         else:
-            response_string += f"\n[With {len(players)} players, it takes {majority_value} votes to reach majority.]\n"
+            response_string += f"\n[With {len(players_sorted)} players, it takes {majority_value} votes to reach majority.]\n"
 
         tmp_format_time = datetime.timedelta(seconds=int((config.end_time - config.cur_time).total_seconds()))
         if config.timer_on:

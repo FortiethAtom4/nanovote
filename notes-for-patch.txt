@@ -32,9 +32,10 @@ Stuff to add:
 7. add short timeout period to votecount (and maybe checktime too) so people dont spam it DONE
 
 ```MafiaBot Patch 3 Notes [date]:
-1. massive code reorganization which took forever and made the bot super modular and cool, not that you normies care
-2. Added short timeout period to votecount to prevent spam
-3. Added lowercase version of each person's name in the DB to speed up calls and make case-insensitive commands much easier
+1. Massive code reorganization which took forever and made the bot super modular and cool, not that you normies care
+2. Complete rework of database access methods, added new database update coroutine which makes commands lightning-fast
+3. Added short timeout period to votecount to prevent spam
+4. Added more global lowercase name recognition for ease of use
 ```
 
 

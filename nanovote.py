@@ -34,6 +34,8 @@ async def on_ready():
     config.valid_channel_ids = db.get_all_valid_channels()
     print("-> Retrieving logging channels...")
     config.log_channel_ids = db.get_all_logging_channels()
+    print("-> Retrieving players...")
+    config.players = db.get_all_players()
     print("-+ Ready\n")
     
 # checks and updates the time. Used for keeping track of day/night time
@@ -49,6 +51,21 @@ async def do_timer():
                 config.timer_on = False
         await sleep(1)
 
+# updates the database every 30 seconds
+@bot.event
+async def do_update():
+    update_time: datetime.timedelta = datetime.datetime.now() + datetime.timedelta(seconds=30)
+    cur_update_time = datetime.datetime.now()
+    while True:
+        cur_update_time = datetime.datetime.now()
+        if cur_update_time >= update_time:
+            print("-> Persisting updates...")
+            db.persist_updates()
+            print("-+ Updates completed.")
+            update_time = datetime.datetime.now() + datetime.timedelta(seconds=30)
+        await sleep(1)
+
+
 """
 /shutdown
 Allows the bot owner to force a bot shutdown remotely.
@@ -60,10 +77,14 @@ Allows the bot owner to force a bot shutdown remotely.
 )
 @commands.is_owner()
 async def shutdown(ctx: discord.ApplicationContext):
+    print("-> Updating...")
+    db.persist_updates()
+    print("-+ Update complete, shutting down")
     await ctx.respond("東雲の家は今日も平和であった。")
     await ctx.bot.close()
     exit()
 
 bot.loop.create_task(do_timer())
+bot.loop.create_task(do_update())
 # run the bot
 bot.run(config.TOKEN)
