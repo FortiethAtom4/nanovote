@@ -248,24 +248,27 @@ def persist_updates():
 
         players.delete_many({})
 
-        # prepare list of dicts to persist
-        players_to_persist: list[dict] = []
-        for player in config.players:
-            players_to_persist.append(player.__dict__)
+        
+        if len(config.players) > 0:
+            # prepare list of dicts to persist
+            players_to_persist: list[dict] = []
+            for player in config.players:
+                players_to_persist.append(player.__dict__)
 
-        # update all player data
-        players.insert_many(players_to_persist)
+            # update all player data
+            players.insert_many(players_to_persist)
 
         channels.delete_many({})
 
-        channels_to_persist: list[dict] = []
-        for channel in config.valid_channel_ids:
-            channels_to_persist.append({"channel_id":channel,"type":"voting"})
+        if len(config.valid_channel_ids) + len(config.log_channel_ids) > 0:
+            channels_to_persist: list[dict] = []
+            for channel in config.valid_channel_ids:
+                channels_to_persist.append({"channel_id":channel,"type":"voting"})
 
-        for channel in config.log_channel_ids:
-            channels_to_persist.append({"channel_id":channel,"type":"logging"})
+            for channel in config.log_channel_ids:
+                channels_to_persist.append({"channel_id":channel,"type":"logging"})
 
-        channels.insert_many(channels_to_persist)
+            channels.insert_many(channels_to_persist)
 
 
     except Exception as e:
