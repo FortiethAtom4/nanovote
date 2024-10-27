@@ -52,11 +52,11 @@ async def do_timer():
                 config.timer_on = False
         await sleep(1)
 
-# updates the database every 2 minutes
+# updates the database every 10 minutes
 @bot.event
 async def do_update():
-    update_interval: int = 120 # number of seconds to wait between updates
-    update_time: datetime.timedelta = datetime.datetime.now() + datetime.timedelta(seconds=update_interval)
+    
+    update_time: datetime.timedelta = datetime.datetime.now() + datetime.timedelta(seconds=config.update_interval)
     cur_update_time = datetime.datetime.now()
     while True:
         cur_update_time = datetime.datetime.now()
@@ -64,8 +64,8 @@ async def do_update():
             print(f"-> {datetime.datetime.today()} Persisting updates...")
             db.persist_updates()
             print(f"-+ {datetime.datetime.today()} Updates completed.")
-            update_time = datetime.datetime.now() + datetime.timedelta(seconds=update_interval)
-        await sleep(1)
+            update_time = datetime.datetime.now() + datetime.timedelta(seconds=config.update_interval)
+        await sleep(60)
 
 
 """
