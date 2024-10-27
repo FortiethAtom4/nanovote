@@ -56,7 +56,7 @@ async def do_timer():
 @bot.event
 async def do_update():
     
-    update_time: datetime.timedelta = datetime.datetime.now() + datetime.timedelta(seconds=config.update_interval)
+    update_time: datetime.timedelta = datetime.datetime.now() + datetime.timedelta(minutes=config.update_interval)
     cur_update_time = datetime.datetime.now()
     while True:
         cur_update_time = datetime.datetime.now()
@@ -64,7 +64,7 @@ async def do_update():
             print(f"-> {datetime.datetime.today()} Persisting updates...")
             db.persist_updates()
             print(f"-+ {datetime.datetime.today()} Updates completed.")
-            update_time = datetime.datetime.now() + datetime.timedelta(seconds=config.update_interval)
+            update_time = datetime.datetime.now() + datetime.timedelta(minutes=config.update_interval)
         await sleep(60)
 
 
