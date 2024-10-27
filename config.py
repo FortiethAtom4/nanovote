@@ -7,6 +7,7 @@ end_time = datetime.datetime.now()
 timer_on: bool = False
 mod_to_dm: str = "" #sends a message to player who sets the timer
 majority: bool = False # for when majority is reached
+update_interval: int = 10 # number of minutes to wait between updates
 
 # To prevent spam, just going to be implemented in votecount for now
 command_delay_timer: datetime.timedelta = datetime.datetime.now()
