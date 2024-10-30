@@ -8,7 +8,8 @@ import db, config
 
 intents = discord.Intents.all() 
 bot = commands.Bot(intents=intents)
-bot.load_extensions("cogs.player_commands","cogs.mod_commands")
+for cog in config.cogs:
+    bot.load_extension(f"cogs.{cog}")
 
 
 # why did i waste my time adding this

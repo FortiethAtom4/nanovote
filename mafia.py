@@ -50,3 +50,8 @@ class Player:
 
     def set_voted_for(self,name):
         self.voted_for = name
+
+class CustomAbility:
+     
+     def __init__(self):
+         pass
