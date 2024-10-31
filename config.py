@@ -12,7 +12,8 @@ update_interval: int = 10 # number of minutes to wait between updates
 cogs: list[str] = [
     "player_commands",
     "mod_commands",
-    "custom_commands"
+    "custom_commands",
+    "bot_admin_commands"
 ]
 
 # To prevent spam, just going to be implemented in votecount for now
