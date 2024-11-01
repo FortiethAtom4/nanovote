@@ -1,4 +1,4 @@
-import discord, datetime, config, db
+import discord, datetime, config, utils.db as db
 from discord.ext import commands
 
 class BotAdminCommands(commands.Cog):
@@ -58,12 +58,13 @@ All users have access to these commands.
 Only users with the Moderator or Main Moderator roles can use these commands.
 ### SETUP
 - `/addplayer [player_name] [player_username] [faction]`: Adds a player to the game. 
-- `/playerinfo`: Displays all information about living players in the game. This includes votecount info as well as their faction and vote value.
-- `/setchannel`: Flags a channel for voting. Players may only vote in channels set with this command.
-- `/removechannel`: Removes a voting flag from a channel.
-- `/setlogchannel`: Flags a channel for logging. The bot will record votes and unvotes in log channels.
-- `/removelogchannel`: Removes a logging flag from a channel.
 - `/help mod`: Displays this message.
+- `/playerinfo`: Displays all information about living players in the game. This includes votecount info as well as their faction and vote value.
+- `/removechannel`: Removes a voting flag from a channel.
+- `/removelogchannel`: Removes a logging flag from a channel.
+- `/setchannel`: Flags a channel for voting. Players may only vote in channels set with this command.
+- `/setlogchannel`: Flags a channel for logging. The bot will record votes and unvotes in log channels.
+- `/setmod`: Saves your username. You will be sent a DM when voting ends. NOTE: Only one username can be saved at a time. 
 ### TIMER
 - `/settimer [time_hours] (time_minutes)`: Sets the timer for the day to end. Players can vote once the timer is started. The mod who sets this timer will be sent a DM when time is up.
 - `/addtime [time_hours] (time_minutes)`: Adds time to the timer. Negative values subtract from the timer.

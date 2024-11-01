@@ -1,4 +1,4 @@
-import discord, datetime, config, db
+import discord, datetime, config, utils.db as db
 from discord.ext import commands
 
 class ModCommands(commands.Cog):
@@ -19,16 +19,12 @@ class ModCommands(commands.Cog):
     )
     @commands.has_any_role("Moderator","Main Moderator")
     async def set_timer(self, ctx: discord.ApplicationContext, time_hours: int, time_minutes: int = 0):
-        config.cur_time = datetime.datetime.now()
-        tmp = config.cur_time + datetime.timedelta(hours=time_hours, minutes=time_minutes)
+        tmp = datetime.timedelta(hours=time_hours, minutes=time_minutes)
         
-        config.end_time = tmp
-        config.timer_on = True
-        config.mod_to_dm = ctx.interaction.user.id
+        config.timer.start(tmp)
 
-        tmp_format_time = datetime.timedelta(seconds=int((config.end_time - config.cur_time).total_seconds()))
-        print(f"-+ Timer set to {tmp_format_time} by {self.bot.get_user(config.mod_to_dm)}")
-        await ctx.respond(f"Timer has been set to **{tmp_format_time}**, starting now. You will be sent a DM when time is up or if a majority is reached.")
+        print(f"-+ Timer set to {tmp}")
+        await ctx.respond(f"Timer has been set to **{tmp}**, starting now.")
 
 
     '''
@@ -42,8 +38,7 @@ class ModCommands(commands.Cog):
     @commands.has_any_role("Moderator","Main Moderator")
     async def toggle_majority(self, ctx: discord.ApplicationContext):
         config.majority = not config.majority
-        if not config.timer_on:
-            config.timer_on = True
+        config.timer.pause() if config.majority else config.timer.unpause()
         await ctx.respond(f"Majority flag set to `{config.majority}`.",ephemeral=True)
 
     '''
@@ -52,19 +47,14 @@ class ModCommands(commands.Cog):
     @discord.slash_command(
         name="toggletimer",
         guild_ids=[config.GUILD_ID],
-        description="MOD: Manually starts/stops the timer. Stopping the timer will display 'time is up' to your players."
+        description="MOD: Manually starts/stops the timer."
     )
     @commands.has_any_role("Moderator","Main Moderator")
     async def toggle_timer(self, ctx: discord.ApplicationContext):
-        if config.end_time <= config.cur_time:
-            await ctx.respond("Timer cannot be toggled as no time has been set. Use /settimer first.")
+        if config.timer.paused_or_stopped() == 0:
+            await ctx.respond("Timer cannot be toggled as no time has been set. Use /settimer first.",ephemeral=True)
             return
-        temp_timer_time = config.end_time - config.cur_time
-        config.timer_on = not config.timer_on
-        if config.timer_on:
-            config.cur_time = datetime.datetime.now()
-            config.end_time = config.cur_time + temp_timer_time
-        await ctx.respond(f"Timer {("started" if config.timer_on else "stopped")}.",ephemeral=True)
+        await ctx.respond(f"Timer {("started" if config.timer.toggle() else "stopped")}.")
 
     """
     /addtime
@@ -78,19 +68,24 @@ class ModCommands(commands.Cog):
     )
     @commands.has_any_role("Moderator","Main Moderator")
     async def add_time(self, ctx: discord.ApplicationContext, time_hours: int, time_minutes: int = 0):
-        if not config.timer_on:
+        if config.timer.paused_or_stopped() == 0:
             await ctx.respond("Timer has not been set. Set it first with /settimer.")
-            return
         
         total_seconds = time_hours * 3600 + time_minutes * 60
-        time_to_add = datetime.timedelta(seconds=total_seconds)
-        config.end_time += time_to_add
-
-        print(f"-+ Added {total_seconds} seconds to the timer")
+        time_added = config.timer.add_time(time_hours,time_minutes)
         if total_seconds < 0:
-            await ctx.respond(f"{datetime.timedelta(seconds=-total_seconds)} subtracted.")
+            if config.timer.paused_or_stopped() == 0:
+                print(f"-+ Subtracted {datetime.timedelta(seconds=abs(total_seconds))} from the timer, time is now up")
+                await ctx.respond(f"{datetime.timedelta(seconds=abs(total_seconds))} subtracted. Time is now up!")
+                if config.mod_to_dm != None:
+                    mod = await self.bot.fetch_user(config.mod_to_dm)
+                    await mod.send("Time is up!")
+                return
+            print(f"-+ Subtracted {datetime.timedelta(seconds=abs(total_seconds))} from the timer")
+            await ctx.respond(f"{datetime.timedelta(seconds=abs(total_seconds))} subtracted.")
         else:
-            await ctx.respond(f"{time_to_add} added.")
+            print(f"-+ Added {datetime.timedelta(seconds=abs(total_seconds))} to the timer")
+            await ctx.respond(f"{time_added} added.")
 
 
     """
@@ -144,9 +139,10 @@ class ModCommands(commands.Cog):
     async def player_info(self, ctx: discord.ApplicationContext):
         initial_response = await ctx.respond("```Getting the deets...```",ephemeral=True)
         print("-> Getting all player info...")
-        players = db.get_all_players()
         response_string = "```"
-        for player in players:
+        if len(config.players) == 0:
+            await initial_response.edit(content="```No players have been added yet.```")
+        for player in config.players:
             response_string += player.to_string(True)
             response_string += "\n-----\n"
         response_string += "```"
@@ -271,7 +267,7 @@ class ModCommands(commands.Cog):
             await ctx.respond("This channel is already set. Remove it with /removechannel.")
             print("-i Channel already set")
             return
-        print("-> Persisting new voting channel to database...")
+        print("-> Adding new voting channel...")
         config.valid_channel_ids.append(ctx.channel.id)
         await ctx.respond(f"Channel set. Voting commands are now accessible from this channel.")
 
@@ -294,7 +290,7 @@ class ModCommands(commands.Cog):
             await ctx.respond("This channel has not been set for voting.")
             print("-i Channel has not been set for voting, skipping")
             return
-        print("-> Removing channel from database...")
+        print("-> Removing voting channel...")
         config.valid_channel_ids.remove(to_remove)
         await ctx.respond("Voting commands are no longer accessible from this channel.")
 
@@ -318,7 +314,7 @@ class ModCommands(commands.Cog):
             print("-i Channel already set")
             return
 
-        print("-> Persisting logging channel to database...")
+        print("-> Adding logging channel...")
         config.log_channel_ids.append(cur_channel)
         await ctx.respond("This channel has been flagged for logging events. Remove this flag with /removelogchannel.")
         print("-+ Channel added")
@@ -340,10 +336,26 @@ class ModCommands(commands.Cog):
             print("-i Log channel not set, skipping")
             return
         
-        print("-> Removing logging channel from database...")
+        print("-> Removing logging channel...")
         config.log_channel_ids.remove(to_remove)
         await ctx.respond("Logging flag removed.")
         print("-+ Channel removed")
+
+    """
+    /setmod
+    Saves the user's ID. That user will be sent a DM when majority is reached or if timer expires. 
+    Currently, only one mod can receive DMS from the bot at a time. 
+    """
+    @discord.slash_command(
+        name="setmod",
+        guild_ids=[config.GUILD_ID],
+        description="MOD: Saves your username. You will be sent a DM when voting ends."
+    )
+    @commands.has_any_role("Moderator","Main Moderator")
+    async def set_mod_to_dm(self, ctx: discord.ApplicationContext):
+        config.mod_to_dm = ctx.interaction.user.id
+        await ctx.respond(f"Preferences saved. You will be sent a DM if majority is reached or if the timer expires.")
+        print(f"-i User {self.bot.get_user(config.mod_to_dm)} flagged for bot DM when voting ends")
 
 
 def setup(bot: discord.Bot): # this is called by Pycord to setup the cog

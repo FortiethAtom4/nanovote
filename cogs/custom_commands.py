@@ -1,4 +1,4 @@
-import discord, datetime, config, db
+import discord, datetime, config, utils.db as db
 from discord.ext import commands
 
 class CustomCommands(commands.Cog):

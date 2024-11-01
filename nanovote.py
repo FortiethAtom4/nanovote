@@ -4,7 +4,7 @@ import datetime
 from asyncio import sleep
 
 # local imports
-import db, config
+import utils.db as db, config
 
 intents = discord.Intents.all() 
 bot = commands.Bot(intents=intents)
@@ -38,35 +38,33 @@ async def on_ready():
     config.log_channel_ids = db.get_all_logging_channels()
     print("-> Retrieving players...")
     config.players = db.get_all_players()
-    print("-+ Ready\n")
+    print(f"-+ {datetime.datetime.today()} Ready\n")
     
 # checks and updates the time. Used for keeping track of day/night time
 @bot.event
 async def do_timer():
     while True:
-        if config.timer_on:
-            config.cur_time = datetime.datetime.now()
-            if config.cur_time >= config.end_time:
+        if not config.timer.stopped:
+            if(config.timer.increment()):
                 if config.mod_to_dm != "":
                     user = await bot.fetch_user(config.mod_to_dm)
                     await user.send("Your timer is up!")
-                config.timer_on = False
+                print("-> Timer expired, persisting updates...")
+                db.persist_updates()
+                print("-+ Updates persisted to database")
         await sleep(1)
 
 # updates the database every 10 minutes
 @bot.event
 async def do_update():
-    
-    update_time: datetime.timedelta = datetime.datetime.now() + datetime.timedelta(minutes=config.update_interval)
-    cur_update_time = datetime.datetime.now()
+    config.update_timer.start(datetime.timedelta(minutes=config.update_interval))
     while True:
-        cur_update_time = datetime.datetime.now()
-        if cur_update_time >= update_time:
-            print(f"-> {datetime.datetime.today()} Persisting updates...")
+        if config.update_timer.increment():
+            print(f"-> {datetime.datetime.today()} Periodic update started...")
             db.persist_updates()
             print(f"-+ {datetime.datetime.today()} Updates completed.")
-            update_time = datetime.datetime.now() + datetime.timedelta(minutes=config.update_interval)
-        await sleep(60)
+            config.update_timer.start(datetime.timedelta(minutes=config.update_interval))
+        await sleep(1)
 
 bot.loop.create_task(do_timer())
 bot.loop.create_task(do_update())

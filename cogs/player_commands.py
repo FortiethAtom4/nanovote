@@ -1,4 +1,4 @@
-import discord, datetime, config, db
+import discord, datetime, config, utils.db as db
 from discord.ext import commands
 
 class PlayerCommands(commands.Cog):
@@ -18,11 +18,13 @@ class PlayerCommands(commands.Cog):
         description="Gets the amount of time left."
     )
     async def check_time(self,ctx: discord.ApplicationContext):
-        if not config.timer_on:
-            await ctx.respond("Timer has not been set.",ephemeral=True)
-            return
-        tmp_format_time = datetime.timedelta(seconds=int((config.end_time - config.cur_time).total_seconds()))
-        await ctx.respond(f"Time remaining: **{tmp_format_time}**",ephemeral=True)
+        match config.timer.paused_or_stopped():
+            case 0:
+                await ctx.respond("Timer has not been set.",ephemeral=True)
+            case 1:
+                await ctx.respond(f"Timer stopped. Time remaining: **{config.timer.print_timer()}**",ephemeral=True)
+            case 2:
+                await ctx.respond(f"Time remaining: **{config.timer.print_timer()}**",ephemeral=True)
 
 
     """ 
@@ -38,21 +40,21 @@ class PlayerCommands(commands.Cog):
     async def vote_count(self, ctx: discord.ApplicationContext):
         time_rem: datetime.timedelta = config.command_delay_timer - datetime.datetime.now()
         if time_rem > datetime.timedelta(seconds=0):
-            await ctx.respond(f"Please wait {time_rem.seconds} second{"" if time_rem.seconds == 1 else "s"} before using /votecount again.",ephemeral=True)
-            print("-+ Votecount spam prevented")
+            await ctx.respond(f"```ini\n[Please wait {time_rem.seconds} second{"" if time_rem.seconds == 1 else "s"} before using /votecount again.]```",ephemeral=True)
+            print("-i Votecount spam prevented")
             return
 
-        initial_response = await ctx.respond("```ini\n[Tallying votes...]```")
+        # initial_response = await ctx.respond("```ini\n[Tallying votes...]```")
         print("-> Getting votecount...")
 
         majority_value = int(db.get_majority())
         
         if len(config.players) == 0:
-            await initial_response.edit(content="No players have been added yet.")
+            await ctx.respond(content="```ini\n[No players have been added yet.]```")
             print("-i No players have been added yet")
             return
         
-        players_sorted = sorted(config.players, key=lambda player:player.name_lower)
+        players_sorted = sorted(config.players, key=lambda player:player.name.lower())
         
         response_string = "```ini\n[Votes:]\n"
 
@@ -61,19 +63,22 @@ class PlayerCommands(commands.Cog):
             response_string += player.to_string(False)+"\n"
 
         if config.majority:
-            config.timer_on = False
             response_string += "\n[A majority has been reached.]\n"
         else:
             response_string += f"\n[With {len(players_sorted)} players, it takes {majority_value} votes to reach majority.]\n"
 
-        tmp_format_time = datetime.timedelta(seconds=int((config.end_time - config.cur_time).total_seconds()))
-        if config.timer_on:
-            response_string += f"[{(f"Time remaining: {tmp_format_time}" if tmp_format_time > datetime.timedelta(seconds=0) else "Time is up!")}]\n"
-        else:
-            response_string += f"[Time remaining when majority was reached: {(tmp_format_time if tmp_format_time > datetime.timedelta(seconds=0) else datetime.timedelta(seconds=0))}]\n" if config.majority else "[Time is up!]\n"
+        match config.timer.paused_or_stopped():
+            case 2:
+                response_string += f"[Time remaining: {config.timer.print_timer()}]\n"
+
+            case 1:
+                response_string += f"[Timer stopped. Time remaining: {config.timer.print_timer()}]\n"
+
+            case 0:
+                response_string += "[Time is up!]"
         response_string += "```"
         print("-+ Sent votecount")
-        await initial_response.edit(content=response_string)
+        await ctx.respond(content=response_string)
         # increment anti-spam timer
         config.command_delay_timer = datetime.datetime.now() + datetime.timedelta(seconds=config.command_delay_seconds)
 
@@ -100,9 +105,9 @@ class PlayerCommands(commands.Cog):
             print("-i Majority reached, voting commands have been disabled")
             return
         
-        if not config.timer_on:
-            await ctx.respond("Time is up. Voting commands have been disabled.")
-            print("-i Time is up, voting commands have been disabled")
+        if config.timer.paused_or_stopped() != 2:
+            await ctx.respond("The timer has been stopped. Voting commands have been disabled.")
+            print("-i Timer stopped, voting commands have been disabled")
             return
         
         username = ctx.user.name
@@ -125,22 +130,26 @@ class PlayerCommands(commands.Cog):
                 await initial_response.edit(content=f"There was an unexpected error when processing vote for {voted_for_name}. Please try again.")
                 print(f"-- An unexpected error occurred when sending in {ctx.user.name}'s vote for {voted_for_name}")
             case 1000:
-                config.timer_on = False
-                config.majority = True
                 await initial_response.edit(content=f"You voted for {voted_for_name}. **MAJORITY REACHED**")
-                mod = await self.bot.fetch_user(config.mod_to_dm)
-                await mod.send("A majority has been reached!")
+                if config.mod_to_dm != None:
+                    mod = await self.bot.fetch_user(config.mod_to_dm)
+                    await mod.send("A majority has been reached!")
                 resp: discord.Message = await initial_response.original_response()
                 for c in config.log_channel_ids:
                     log_channel: discord.TextChannel = self.bot.get_channel(c)
-                    await log_channel.send(f"[(LINK TO MESSAGE)]({resp.jump_url}) {voter_name} voted for {voted_for_name}. **MAJORITY REACHED**")
+                    await log_channel.send(f"[{voter_name} voted for {voted_for_name}.]({resp.jump_url}) **MAJORITY REACHED**")
+                print("-> Majority reached by vote, peristing updates...")
+                db.persist_updates()
+                print("-+ Updates persisted to database")
+                config.timer.pause()
+                config.majority = True
                 print(f"-+ {voter_name} voted for {voted_for_name} and a majority was reached")
             case 0:
                 await initial_response.edit(content=f"You voted for {voted_for_name}.")
                 resp: discord.Message = await initial_response.original_response()
                 for c in config.log_channel_ids:
-                    log_channel: discord.TextChannel = self.bot.get_channel(c)
-                    await log_channel.send(f"[(LINK TO MESSAGE)]({resp.jump_url}) {voter_name} voted for {voted_for_name}.")
+                    log_channel = self.bot.get_channel(c)
+                    await log_channel.send(f"[{voter_name} voted for {voted_for_name}.]({resp.jump_url})")
                 print(f"-+ {voter_name} voted for {voted_for_name}")
             
 
@@ -165,10 +174,10 @@ class PlayerCommands(commands.Cog):
             await ctx.respond("Majority has been reached. Voting commands have been disabled.")
             print("-i Majority reached, voting commands have been disabled")
             return
-        
-        if not config.timer_on:
-            await ctx.respond("Time is up. Voting commands have been disabled.")
-            print("-i Time is up, voting commands have been disabled")
+
+        if config.timer.paused_or_stopped() != 2:
+            await ctx.respond("The timer has been stopped. Voting commands have been disabled.")
+            print("-i Timer stopped, voting commands have been disabled")
             return
         
         username = ctx.user.name
@@ -191,8 +200,8 @@ class PlayerCommands(commands.Cog):
                 await initial_response.edit(content="You unvoted.")
                 resp: discord.Message = await initial_response.original_response()
                 for c in config.log_channel_ids:
-                    log_channel: discord.TextChannel = self.bot.get_channel(c)
-                    await log_channel.send(f"[(LINK TO MESSAGE)]({resp.jump_url}) {unvoter_name} unvoted.")
+                    log_channel = self.bot.get_channel(c)
+                    await log_channel.send(f"[{unvoter_name} unvoted.]({resp.jump_url})")
 
                 print(f"-+ {unvoter_name} unvoted")
 

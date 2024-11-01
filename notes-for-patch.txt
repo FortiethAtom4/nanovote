@@ -23,20 +23,29 @@
 3. Added 10-second delay timer for /votecount to prevent spam (not that this has been a problem...yet)
 ```
 
+```MafiaBot Patch 4 Notes 10/24/24:
+1. Massive code reorganization which took forever and made the bot super modular and cool, not that you normies care
+2. Complete rework of database access methods, added new database update coroutine which makes commands lightning-fast
+4. Added more global lowercase name recognition for ease of use
+```
+
 Stuff to add:
 1. day functionality, resetting days, adding days, etc, maybe?
 2. logging lynches/kills(?) in voting log, maybe?
-3. Add command to set the username of player to receive timer/majority DMs
-4. add lowercase version of each person's name in the DB to speed up calls and make case insensitivity much easier DONE
-5. allow mods to create advanced voting rules for specific players - this one's gonna take a bit
-7. add short timeout period to votecount (and maybe checktime too) so people dont spam it DONE
+3. allow mods to create advanced voting rules for specific players - this one's gonna take a bit
 
-```MafiaBot Patch 3 Notes 10/24/24:
-1. Massive code reorganization which took forever and made the bot super modular and cool, not that you normies care
-2. Complete rework of database access methods, added new database update coroutine which makes commands lightning-fast
-3. Added short timeout period to votecount to prevent spam
-4. Added more global lowercase name recognition for ease of use
+```MafiaBot Patch 5 Notes [date]:
+1. Added /help commands for players/mods to refer to when using the bot
+2. Added /setmod command which allows moderators to choose who gets DM'd when voting ends (without being forced to use /settimer)
+3. (As an extension of the above) Removed mod DM functionality from /settimer. Mods must use /setmod for that now
+4. Improved bot message clarity, cleaned up log messages
+5. Removed some unecessary database calls, some potential command speedups
+6. Fixed a bug where using "/toggletimer" would say that the time had stopped but not actually pause the timer
+7. Created an internal Timer class to make time-based command programming easier (as the solution to the above) 
+8. Some more really cool and awesome code reorganization that will make girls think im sexually attractive and a viable marriage candidate
 ```
+
+
 
 
 

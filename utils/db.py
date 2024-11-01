@@ -18,7 +18,7 @@ def test_connection():
 def get_all_valid_channels():
     try:
         client = pymongo.MongoClient(config.db_URL)
-        db = client["MafiaPlayers"]
+        db = client[config.DB_NAME]
         channel = db[config.CHANNEL_COLLECTION]
         channel_list: list[dict] = channel.find({"type":"voting"}).to_list()
         to_return = []
@@ -33,7 +33,7 @@ def get_all_valid_channels():
 def get_all_logging_channels():
     try:
         client = pymongo.MongoClient(config.db_URL)
-        db = client["MafiaPlayers"]
+        db = client[config.DB_NAME]
         channel = db[config.CHANNEL_COLLECTION]
         channel_list: list[dict] = channel.find({"type":"logging"}).to_list()
         to_return = []
@@ -73,7 +73,7 @@ def get_majority() -> int:
 def get_all_players() -> list[Player]:
     try:
         client = pymongo.MongoClient(config.db_URL)
-        db = client["MafiaPlayers"]
+        db = client[config.DB_NAME]
         players = db[config.COLLECTION]
 
         all_players = players.find({}).to_list()
@@ -90,7 +90,7 @@ def get_all_players() -> list[Player]:
         return []
     
 def is_majority(player_name: str):
-    total_votes = next(player for player in config.players if (player.name == player_name or player.name_lower == player_name)).number_of_votes
+    total_votes = next(player for player in config.players if (player.name.lower() == player_name.lower())).number_of_votes
     total_players = len(config.players)
 
     return True if total_votes > (total_players/2) else False
@@ -104,7 +104,7 @@ def vote(voter_username: str,voted_for_name: str) -> int:
         return -1
     
     # can't vote for players who don't exist
-    voted_for_player: Player = next((player for player in config.players if player.name == voted_for_name or player.name_lower == voted_for_name),None)
+    voted_for_player: Player = next((player for player in config.players if player.name.lower() == voted_for_name.lower()),None)
     if voted_for_player == None:
         return 2
     
@@ -139,7 +139,7 @@ def set_vote_value(name: str, value: int) -> int:
     is_real_player = False
     player_index = 0
     for i in range(len(config.players)):
-        if config.players[i].name == name or config.players[i].name_lower == name:
+        if config.players[i].name.lower() == name.lower():
             is_real_player = True
             player_index = i
             break
@@ -151,7 +151,7 @@ def set_vote_value(name: str, value: int) -> int:
     return 0
     
 def mod_add_vote(player_name: str, value: int) -> int:
-    player_to_add_votes: Player = next((player for player in config.players if player.name == player_name or player.name_lower == player_name),None)
+    player_to_add_votes: Player = next((player for player in config.players if player.name.lower() == player_name.lower()),None)
     if player_to_add_votes == None:
         return -1
     
@@ -190,13 +190,12 @@ def kill_player(player_name: str) -> int:
 def persist_updates():
     try:
         client = pymongo.MongoClient(config.db_URL)
-        db = client["MafiaPlayers"]
+        db = client[config.DB_NAME]
         players = db[config.COLLECTION]
         channels = db[config.CHANNEL_COLLECTION]
 
         players.delete_many({})
 
-        
         if len(config.players) > 0:
             # prepare list of dicts to persist
             players_to_persist: list[dict] = []

@@ -1,20 +1,23 @@
 import datetime, dotenv, os
 from mafia import Player
+from utils.timer import Timer
 
-# global time variables
-cur_time = datetime.datetime.now()
-end_time = datetime.datetime.now()
-timer_on: bool = False
-mod_to_dm: str = "" #sends a message to player who sets the timer
-majority: bool = False # for when majority is reached
-update_interval: int = 10 # number of minutes to wait between updates
-
+########## ADD YOUR COG FILE NAME HERE ##########
 cogs: list[str] = [
     "player_commands",
     "mod_commands",
     "custom_commands",
     "bot_admin_commands"
 ]
+#################################################
+
+mod_to_dm: str = None #sends a message to player who sets the timer
+majority: bool = False # for when majority is reached
+
+timer: Timer = Timer() # Game timer
+
+update_timer: Timer = Timer() # Timer used for automatic database updates
+update_interval: int = 15 # number of minutes to wait between automatic updates
 
 # To prevent spam, just going to be implemented in votecount for now
 command_delay_timer: datetime.timedelta = datetime.datetime.now()
@@ -27,14 +30,13 @@ log_channel_ids: list[int] = []
 # player list fetched at bot start
 players: list[Player] = []
 
-# db env
+# private variables from the .env
 dotenv.load_dotenv(dotenv.find_dotenv(usecwd=True))
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD_ID = int(os.getenv('GUILD_ID'))
 USER = os.getenv("MONGODB_USER")
 PASS = os.getenv("MONGODB_PASS")
-CHANNEL_COLLECTION = os.getenv("DB_CHANNEL_COLLECTION")
-
-# different db collections, one for dev env one for mafiacord
+DB_NAME = os.getenv("DB_NAME")
 COLLECTION = os.getenv("DB_COLLECTION")
+CHANNEL_COLLECTION = os.getenv("DB_CHANNEL_COLLECTION")
 db_URL = f"mongodb+srv://{USER}:{PASS}@nanobot.lab1zmc.mongodb.net/"
