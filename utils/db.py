@@ -15,7 +15,7 @@ def test_connection():
         return -1
     
 # fetches all valid channels
-def get_all_valid_channels():
+def get_all_valid_channels() -> list[int]:
     try:
         client = pymongo.MongoClient(config.db_URL)
         db = client[config.DB_NAME]
@@ -28,7 +28,7 @@ def get_all_valid_channels():
         return to_return
     
     except:
-        return -1
+        return []
     
 def get_all_logging_channels():
     try:
@@ -43,7 +43,7 @@ def get_all_logging_channels():
         return to_return
     
     except:
-        return -1
+        return []
 
 # checks if a given channel is on the list of valid channels for commands.
 def is_valid_channel(channel_id) -> bool:
