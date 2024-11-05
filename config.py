@@ -17,7 +17,7 @@ majority: bool = False # for when majority is reached
 timer: Timer = Timer() # Game timer
 
 update_timer: Timer = Timer() # Timer used for automatic database updates
-update_interval: int = 15 # number of minutes to wait between automatic updates
+update_interval: int = 30 # number of minutes to wait between automatic updates
 
 # To prevent spam, just going to be implemented in votecount for now
 command_delay_timer: datetime.timedelta = datetime.datetime.now()
