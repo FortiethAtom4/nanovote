@@ -12,7 +12,6 @@
 5. After a majority has been reached, you can reset the vote count using `/resetvotes`. This will re-enable voting commands for players.
 
 # COMMANDS
-Below is an exhaustive list of all available commands.
 
 ## PLAYER COMMANDS
 All users have access to these commands.
@@ -46,11 +45,6 @@ Only users with the Moderator or Main Moderator roles can use these commands.
 - `/togglemajority`: Toggles the majority flag on or off. Players cannot vote if the majority flag is toggled. 
 - `/kill [player_name]`: Kills a player, removing them from the game.
 
-KNOWN BUGS:
-1. setting a player's vote value after they have voted does not update any current votes.
-    - e.g. My vote value is 1. I vote for Bennett. My vote value is then set to 2. My vote on Bennett is still 1 and won't change unti I unvote and re-vote.
-
-
 # HOW TO ADD YOUR OWN CUSTOM COMMANDS
 
 The bot has been organized so that adding new commands is easy to do without getting too deep in the weeds of it all. Here are the high-level steps involved in making a new class of commands and adding them to the bot:
@@ -62,3 +56,7 @@ The bot has been organized so that adding new commands is easy to do without get
 5. Code whatever you want in your new mostly-empty class. If you're unfamiliar with making Discord bot commands, feel free to copy-paste commands from the other cogs to try them out, or peruse the Pycord documentation for more info.
 6. In `config.py`, add the name of your file to the `cogs` list variable. Make sure not to include the `.py` extension; you just need the base name. 
 If everything else has been done right, your commands should now be available in the bot for testing/usage when you run `python nanovote.py`.
+
+# KNOWN BUGS:
+1. setting a player's vote value after they have voted does not update any current votes.
+    - e.g. My vote value is 1. I vote for Bennett. My vote value is then set to 2. My vote on Bennett is still 1 and won't change unti I unvote and re-vote.
