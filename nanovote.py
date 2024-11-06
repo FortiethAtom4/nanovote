@@ -54,7 +54,7 @@ async def do_timer():
                 print("-+ Updates persisted to database")
         await sleep(1)
 
-# updates the database every 10 minutes
+# updates the database every 30 minutes
 @bot.event
 async def do_update():
     config.update_timer.start(datetime.timedelta(minutes=config.update_interval))
