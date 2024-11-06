@@ -80,6 +80,6 @@ The bot has been organized so that adding new commands is easy to do without get
 6. In `config.py`, add the name of your file to the `cogs` list variable. Make sure not to include the `.py` extension; you just need the base name. 
 If everything else has been done right, your commands should now be available in the bot for testing/usage when you run `python nanovote.py`.
 
-# KNOWN BUGS:
+# KNOWN BUGS
 1. setting a player's vote value after they have voted does not update any current votes.
     - e.g. My vote value is 1. I vote for Bennett. My vote value is then set to 2. My vote on Bennett is still 1 and won't change unti I unvote and re-vote.
