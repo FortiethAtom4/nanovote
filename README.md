@@ -18,28 +18,37 @@ SETUP:
 
 List of commands:
 
-Commands available to all players:
-- /vote
-- /unvote
-- /votecount
-- /checktime
+## PLAYER COMMANDS
+All users have access to these commands.
 
-Mod-only commands:
-- /playerinfo
+- `/checktime`: Gets the amount of time left before the day ends.
+- `/votecount`: Gets a list of all players in the game, their vote counts, the time remaining in the day, and the number of votes needed for majority.
+- `/vote [playername]`: Places your vote for a player to be lynched. Available for living players only.
+- `/unvote`: Revokes your vote on a player. Available for living players only.
+- `/help player`: Displays this message.'
 
-- /addplayer
-
-- /kill
-
-- /settimer
-
-- /setchannel
-
-- /removechannel
-
-- /resetvotes
-
-- /setvotevalue
+## MOD COMMANDS
+Only users with the Moderator or Main Moderator roles can use these commands.
+### SETUP
+- `/addplayer [player_name] [player_username] [faction]`: Adds a player to the game. 
+- `/help mod`: Displays this message.
+- `/playerinfo`: Displays all information about living players in the game. This includes votecount info as well as their faction and vote value.
+- `/removechannel`: Removes a voting flag from a channel.
+- `/removelogchannel`: Removes a logging flag from a channel.
+- `/setchannel`: Flags a channel for voting. Players may only vote in channels set with this command.
+- `/setlogchannel`: Flags a channel for logging. The bot will record votes and unvotes in log channels.
+- `/setmod`: Saves your username. You will be sent a DM when voting ends. NOTE: Only one username can be saved at a time. 
+### TIMER
+- `/settimer [time_hours] (time_minutes)`: Sets the timer for the day to end. Players can vote once the timer is started. The mod who sets this timer will be sent a DM when time is up.
+- `/addtime [time_hours] (time_minutes)`: Adds time to the timer. Negative values subtract from the timer.
+- `/toggletimer`: Toggles the timer on and off. Players cannot vote while the timer is off.
+### VOTE MANAGEMENT
+- `/resetvotes`: Resets all players' votes and sets their vote counts to 0.
+- `/setvotevalue [player_name] [value]`: Sets the value of a player's vote. Default value is 1.
+- `/addvotes [player_name] [value]`: Manually add votes to a player. Negative values subtract votes. WARNING: Adding votes this way CAN trigger majority.
+### END OF DAY
+- `/togglemajority`: Toggles the majority flag on or off. Players cannot vote if the majority flag is toggled. 
+- `/kill [player_name]`: Kills a player, removing them from the game.
 
 KNOWN BUGS:
 1. setting a player's vote value after they have voted does not update any current votes.
