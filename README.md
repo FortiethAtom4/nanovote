@@ -1,8 +1,4 @@
-# NANOVOTE
-
-
-
-SETUP:
+# SETUP:
 
 1. Create a channel for voters to discuss in. Type `/setchannel` to allow voting in that channel only.
 
@@ -15,8 +11,8 @@ SETUP:
 
 5. After a majority has been reached, you can reset the vote count using `/resetvotes`. This will re-enable voting commands for players.
 
-
-List of commands:
+# COMMANDS
+Below is an exhaustive list of all available commands.
 
 ## PLAYER COMMANDS
 All users have access to these commands.
