@@ -1,4 +1,27 @@
-# SETUP:
+# SETUP
+
+## PROGRAM SETUP
+Prerequisites: Git, Python
+
+1. Clone this repo.
+
+2. Install the required dependencies.
+    - I recommend you do this in a local virtual environment. You can create one easily within this directory by typing `python -m venv venv`, then activate it using its `activate` script. 
+    - Whether you are using a venv or not, install the dependencies by running `pip install -r requirements.txt`.
+
+3. Setup the `.env` file. You will need a Discord account with access to the Developer Portal and a MongoDB account (A Free Tier account is fine).
+    - Below are the variables required in your `.env` file in order for the program to work:
+        - MONGODB_USER - the username for your MongoDB user that will access the database.
+        - MONGODB_PASS - the password for the MongoDB user.
+        - DISCORD_TOKEN - A token to access a Discord application. You can get one by creating an application on the [Discord Developer Portal](https://discord.com/developers/applications). NOTE: this bot currently requires all intents.
+        - GUILD_ID - the ID of the guild you will use this bot in. You can copy guild ID if you have Developer Tools turned on in your Discord settings.
+        - DB_NAME - The name of the DB you create in MongoDB
+        - DB_COLLECTION - Name of a collection to store player data.
+        - DB_CHANNEL_COLLECTION - Name of a collection to store channel data.
+
+Once all of the dependencies are installed and the `.env` files are set, the code should be good to go.
+
+## DISCORD SETUP
 
 1. Create a channel for voters to discuss in. Type `/setchannel` to allow voting in that channel only.
 
