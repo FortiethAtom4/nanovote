@@ -357,6 +357,22 @@ class ModCommands(commands.Cog):
         await ctx.respond(f"Preferences saved. You will be sent a DM if majority is reached or if the timer expires.")
         print(f"-i User {self.bot.get_user(config.mod_to_dm)} flagged for bot DM when voting ends")
 
+    """
+    /setmod
+    Saves the user's ID. That user will be sent a DM when majority is reached or if timer expires. 
+    Currently, only one mod can receive DMS from the bot at a time. 
+    """
+    @discord.slash_command(
+        name="unsetmod",
+        guild_ids=[config.GUILD_ID],
+        description="MOD: Removes your username from the bot. You will no longer be sent a DM if voting ends."
+    )
+    @commands.has_any_role("Moderator","Main Moderator")
+    async def unset_mod_to_dm(self, ctx: discord.ApplicationContext):
+        config.mod_to_dm = None
+        await ctx.respond(f"Preferences saved.")
+        print(f"-i User {self.bot.get_user(config.mod_to_dm)} flagged for bot DM when voting ends")
+
 
 def setup(bot: discord.Bot): # this is called by Pycord to setup the cog
     bot.add_cog(ModCommands(bot)) # add the cog to the bot

@@ -54,15 +54,15 @@ async def do_timer():
                 print("-+ Updates persisted to database")
         await sleep(1)
 
-# updates the database every 30 minutes
+# updates the database automatically at regular intervals
 @bot.event
 async def do_update():
     config.update_timer.start(datetime.timedelta(minutes=config.update_interval))
     while True:
         if config.update_timer.increment():
-            print(f"-> {datetime.datetime.today()} Periodic update started...")
+            print(f"-> {datetime.datetime.today()} Periodic database update started...")
             db.persist_updates()
-            print(f"-+ {datetime.datetime.today()} Updates completed.")
+            print(f"-+ {datetime.datetime.today()} Update completed.")
             config.update_timer.start(datetime.timedelta(minutes=config.update_interval))
         await sleep(1)
 
