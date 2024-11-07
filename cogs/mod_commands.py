@@ -371,7 +371,7 @@ class ModCommands(commands.Cog):
     async def unset_mod_to_dm(self, ctx: discord.ApplicationContext):
         config.mod_to_dm = None
         await ctx.respond(f"Preferences saved.")
-        print(f"-i User {self.bot.get_user(config.mod_to_dm)} unflagged for bot DM")
+        print(f"-i Mod username removed, bot will no longer DM")
 
 
 def setup(bot: discord.Bot): # this is called by Pycord to setup the cog
