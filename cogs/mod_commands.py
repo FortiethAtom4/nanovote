@@ -358,9 +358,8 @@ class ModCommands(commands.Cog):
         print(f"-i User {self.bot.get_user(config.mod_to_dm)} flagged for bot DM when voting ends")
 
     """
-    /setmod
-    Saves the user's ID. That user will be sent a DM when majority is reached or if timer expires. 
-    Currently, only one mod can receive DMS from the bot at a time. 
+    /unset
+    removes the user's ID. That user will no longer be sent DMs from the bot. 
     """
     @discord.slash_command(
         name="unsetmod",
