@@ -49,7 +49,6 @@ All users have access to these commands.
     /help mod
     Shows a help message for mods.
     """
-    @commands.has_any_role("Moderator","Main Moderator")
     @help.command(
         description="Displays a help message for mods."
     )
