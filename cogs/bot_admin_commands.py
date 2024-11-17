@@ -66,7 +66,7 @@ Only users with the Moderator or Main Moderator roles can use these commands.
 - `/setmod`: Saves your username. You will be sent a DM when voting ends. NOTE: Only one username can be saved at a time. 
 - `/unsetmod`: Removes your username from the bot. You will no longer be sent a DM if voting ends.
 ### TIMER
-- `/settimer [time_hours] (time_minutes)`: Sets the timer for the day to end. Players can vote once the timer is started. The mod who sets this timer will be sent a DM when time is up.
+- `/settimer [time_hours] (time_minutes)`: Sets the timer for the day to end. Players can vote once the timer is started.
 - `/addtime [time_hours] (time_minutes)`: Adds time to the timer. Negative values subtract from the timer.
 - `/toggletimer`: Toggles the timer on and off. Players cannot vote while the timer is off.
 ### VOTE MANAGEMENT
