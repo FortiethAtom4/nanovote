@@ -55,13 +55,15 @@ class PlayerCommands(commands.Cog):
             return
         
         players_sorted = sorted(config.players, key=lambda player:player.name.lower())
-        
-        response_string = "```ini\n[Votes:]\n"
+        not_voted: str = "\n[Not voting: " # list of all players not voting
+        response_string: str = "```ini\n[Votes:]\n"
 
         
         for player in players_sorted:
             response_string += player.to_string(False)+"\n"
-
+            if player.voted_for == "":
+                not_voted += f"{player.name}, "
+        response_string += not_voted.removesuffix(", ") + "]\n"
         if config.majority:
             response_string += "\n[A majority has been reached.]\n"
         else:
