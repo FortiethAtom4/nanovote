@@ -1,10 +1,16 @@
-import discord, datetime, config, utils.db as db
+import discord, datetime, config, utils.db as db, logging
 from discord.ext import commands
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='mafia.log', encoding='utf-8', level=logging.INFO, format=config.log_formatter)
 
 class PlayerCommands(commands.Cog):
 
+
+
     def __init__(self, bot: discord.Bot): # this is a special method that is called when the cog is loaded
         self.bot = bot
+
 
     """ 
     /checktime
@@ -41,17 +47,17 @@ class PlayerCommands(commands.Cog):
         time_rem: datetime.timedelta = config.command_delay_timer - datetime.datetime.now()
         if time_rem > datetime.timedelta(seconds=0):
             await ctx.respond(f"```ini\n[Please wait {time_rem.seconds} second{"" if time_rem.seconds == 1 else "s"} before using /votecount again.]```",ephemeral=True)
-            print("-i Votecount spam prevented")
+            logger.info("Votecount spam prevented")
             return
 
         # initial_response = await ctx.respond("```ini\n[Tallying votes...]```")
-        print("-> Getting votecount...")
+        logger.debug("Getting votecount...")
 
         majority_value = int(db.get_majority())
         
         if len(config.players) == 0:
             await ctx.respond(content="```ini\n[No players have been added yet.]```")
-            print("-i No players have been added yet")
+            logger.debug("No players have been added yet")
             return
         
         players_sorted = sorted(config.players, key=lambda player:player.name.lower())
@@ -79,7 +85,7 @@ class PlayerCommands(commands.Cog):
             case 0:
                 response_string += "[Time is up!]"
         response_string += "```"
-        print("-+ Sent votecount")
+        logger.info("Sent votecount")
         await ctx.respond(content=response_string)
         # increment anti-spam timer
         config.command_delay_timer = datetime.datetime.now() + datetime.timedelta(seconds=config.command_delay_seconds)
@@ -99,38 +105,38 @@ class PlayerCommands(commands.Cog):
 
         if ctx.channel.id not in config.valid_channel_ids:
             await ctx.respond(content="Mafia commands are not allowed in this channel. Please ask an admin to use /setchannel or use the appropriate channels.")
-            print("-i Vote sent in from a channel not flagged for voting commands, ignoring")
+            logger.info("Vote sent in from a channel not flagged for voting commands, ignoring")
             return
 
         if config.majority:
             await ctx.respond("Majority has been reached. Voting commands have been disabled.")
-            print("-i Majority reached, voting commands have been disabled")
+            logger.debug("Majority reached, voting commands have been disabled")
             return
         
         if config.timer.paused_or_stopped() != 2:
             await ctx.respond("The timer has been stopped. Voting commands have been disabled.")
-            print("-i Timer stopped, voting commands have been disabled")
+            logger.debug("Timer stopped, voting commands have been disabled")
             return
         
         username = ctx.user.name
         if not db.is_playing(username):
             await ctx.respond("You are not alive in this game!")
-            print(f"-i Non-participating player {ctx.user.name} cannot vote")
+            logger.info(f"Non-participating player {ctx.user.name} cannot vote")
             return
         
         initial_response = await ctx.respond("Sending your vote in...")
         voter_name = next(player for player in config.players if player.username == username).name
-        print(f"-> Sending in {voter_name}'s vote on {voted_for_name}...")
+        logger.debug(f"-> Sending in {voter_name}'s vote on {voted_for_name}...")
         match(db.vote(username,voted_for_name)):
             case -1:
                 await initial_response.edit(content=f"You have already voted!")
-                print(f"-i Player {ctx.user.name} has already voted")
+                logger.debug(f"Player {ctx.user.name} has already voted")
             case 2:
                 await initial_response.edit(content=f"Player \'{voted_for_name}\' does not exist. Please check your spelling and try again.")
-                print(f"-i Player'{voted_for_name}' does not exist")
+                logger.debug(f"Player'{voted_for_name}' does not exist")
             case 1:
                 await initial_response.edit(content=f"There was an unexpected error when processing vote for {voted_for_name}. Please try again.")
-                print(f"-- An unexpected error occurred when sending in {ctx.user.name}'s vote for {voted_for_name}")
+                logger.warning(f"An unexpected error occurred when sending in {ctx.user.name}'s vote for {voted_for_name}")
             case 1000:
                 await initial_response.edit(content=f"You voted for {voted_for_name}. **MAJORITY REACHED**")
                 if config.mod_to_dm != None:
@@ -140,19 +146,19 @@ class PlayerCommands(commands.Cog):
                 for c in config.log_channel_ids:
                     log_channel: discord.TextChannel = self.bot.get_channel(c)
                     await log_channel.send(f"[{voter_name} voted for {voted_for_name}.]({resp.jump_url}) **MAJORITY REACHED**")
-                print("-> Majority reached by vote, peristing updates...")
+                logger.info("Majority reached by vote, peristing updates...")
                 db.persist_updates()
-                print("-+ Updates persisted to database")
+                logger.info("Updates persisted to database")
                 config.timer.pause()
                 config.majority = True
-                print(f"-+ {voter_name} voted for {voted_for_name} and a majority was reached")
+                logger.info(f"{voter_name} voted for {voted_for_name} and a majority was reached")
             case 0:
                 await initial_response.edit(content=f"You voted for {voted_for_name}.")
                 resp: discord.Message = await initial_response.original_response()
                 for c in config.log_channel_ids:
                     log_channel = self.bot.get_channel(c)
                     await log_channel.send(f"[{voter_name} voted for {voted_for_name}.]({resp.jump_url})")
-                print(f"-+ {voter_name} voted for {voted_for_name}")
+                logger.info(f"{voter_name} voted for {voted_for_name}")
             
 
     """ 
@@ -169,34 +175,34 @@ class PlayerCommands(commands.Cog):
 
         if ctx.channel.id not in config.valid_channel_ids:
             await ctx.respond(content="Mafia commands are not allowed in this channel. Please ask an admin to use /setchannel or use the appropriate channels.")
-            print("-i Vote sent in from a channel not flagged for voting commands, ignoring")
+            logger.info("Vote sent in from a channel not flagged for voting commands, ignoring")
             return
 
         if config.majority:
             await ctx.respond("Majority has been reached. Voting commands have been disabled.")
-            print("-i Majority reached, voting commands have been disabled")
+            logger.debug("Majority reached, voting commands have been disabled")
             return
 
         if config.timer.paused_or_stopped() != 2:
             await ctx.respond("The timer has been stopped. Voting commands have been disabled.")
-            print("-i Timer stopped, voting commands have been disabled")
+            logger.debug("Timer stopped, voting commands have been disabled")
             return
         
         username = ctx.user.name
         if not db.is_playing(username):
             await ctx.respond("You are not alive in this game!")
-            print(f"-i Non-participating player {ctx.user.name} cannot unvote")
+            logger.info(f"Non-participating player {ctx.user.name} cannot unvote")
             return 
         
         initial_response = await ctx.respond("Striking thy name from the archives...")
         unvoter_name = next(player for player in config.players if player.username == username).name
-        print(f"-> {unvoter_name} is unvoting...")
+        logger.debug(f"{unvoter_name} is unvoting...")
         match(db.unvote(username)):
             case 1:
-                print("-- An error occurred when processing unvote")
+                logger.warning(f"An error occurred when processing unvote for {unvoter_name}")
                 await initial_response.edit(content="There was an unexpected error when processing your unvote. Please try again.")
             case -1:
-                print(f"-i {unvoter_name} has not voted")
+                logger.debug(f"-i {unvoter_name} has not voted")
                 await initial_response.edit(content="You haven't voted for anyone yet.")
             case 0:
                 await initial_response.edit(content="You unvoted.")
@@ -205,7 +211,7 @@ class PlayerCommands(commands.Cog):
                     log_channel = self.bot.get_channel(c)
                     await log_channel.send(f"[{unvoter_name} unvoted.]({resp.jump_url})")
 
-                print(f"-+ {unvoter_name} unvoted")
+                logger.info(f"{unvoter_name} unvoted")
 
 def setup(bot: discord.Bot): # this is called by Pycord to setup the cog
     bot.add_cog(PlayerCommands(bot)) # add the cog to the bot

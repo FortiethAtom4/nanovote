@@ -1,10 +1,12 @@
-import discord
+import discord, logging, datetime
 from discord.ext import commands
-import datetime
 from asyncio import sleep
 
 # local imports
 import utils.db as db, config
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='mafia.log', encoding='utf-8', level=logging.INFO, format=config.log_formatter)
 
 intents = discord.Intents.all() 
 bot = commands.Bot(intents=intents)
@@ -25,11 +27,13 @@ print("""---------##---------
 -------######-------
 ---------##---------\n""")
 print("-> Logging in...")
+logger.info("### Bot starting... ###")
 
 
 # to show when bot first logs in.
 @bot.event
 async def on_ready():
+
     print(f"-+ Successfully logged in as {bot.user}.")
     print(f"-i Current latency: {round(bot.latency*1000,3)}ms")
     print("-> Retrieving voting channels...")
@@ -39,6 +43,7 @@ async def on_ready():
     print("-> Retrieving players...")
     config.players = db.get_all_players()
     print(f"-+ {datetime.datetime.today()} Ready\n")
+    logger.info("Ready")
     
 # checks and updates the time. Used for keeping track of day/night time
 @bot.event

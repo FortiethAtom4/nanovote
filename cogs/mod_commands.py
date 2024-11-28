@@ -1,5 +1,8 @@
-import discord, datetime, config, utils.db as db
+import discord, datetime, config, utils.db as db, logging
 from discord.ext import commands
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(filename='mafia.log', encoding='utf-8', level=logging.INFO, format=config.log_formatter)
 
 class ModCommands(commands.Cog):
 
@@ -23,7 +26,7 @@ class ModCommands(commands.Cog):
         
         config.timer.start(tmp)
 
-        print(f"-+ Timer set to {tmp}")
+        logger.info(f"Timer set to {tmp}")
         await ctx.respond(f"Timer has been set to **{tmp}**, starting now.")
 
 
@@ -39,6 +42,7 @@ class ModCommands(commands.Cog):
     async def toggle_majority(self, ctx: discord.ApplicationContext):
         config.majority = not config.majority
         config.timer.pause() if config.majority else config.timer.unpause()
+        logger.info(f"Majority flag set to {config.majority}")
         await ctx.respond(f"Majority flag set to `{config.majority}`.",ephemeral=True)
 
     '''
@@ -54,6 +58,7 @@ class ModCommands(commands.Cog):
         if config.timer.paused_or_stopped() == 0:
             await ctx.respond("Timer cannot be toggled as no time has been set. Use /settimer first.",ephemeral=True)
             return
+        logger.info(f"Timer {("started" if config.timer.toggle() else "stopped")}")
         await ctx.respond(f"Timer {("started" if config.timer.toggle() else "stopped")}.")
 
     """
@@ -75,16 +80,17 @@ class ModCommands(commands.Cog):
         time_added = config.timer.add_time(time_hours,time_minutes)
         if total_seconds < 0:
             if config.timer.paused_or_stopped() == 0:
-                print(f"-+ Subtracted {datetime.timedelta(seconds=abs(total_seconds))} from the timer, time is now up")
+                logger.info(f"Subtracted {datetime.timedelta(seconds=abs(total_seconds))} from the timer, time is now up")
                 await ctx.respond(f"{datetime.timedelta(seconds=abs(total_seconds))} subtracted. Time is now up!")
                 if config.mod_to_dm != None:
                     mod = await self.bot.fetch_user(config.mod_to_dm)
                     await mod.send("Time is up!")
+                    logger.info(f"Time up message sent to {config.mod_to_dm}")
                 return
-            print(f"-+ Subtracted {datetime.timedelta(seconds=abs(total_seconds))} from the timer")
+            logger.info(f"Subtracted {datetime.timedelta(seconds=abs(total_seconds))} from the timer")
             await ctx.respond(f"{datetime.timedelta(seconds=abs(total_seconds))} subtracted.")
         else:
-            print(f"-+ Added {datetime.timedelta(seconds=abs(total_seconds))} to the timer")
+            logger.info(f"Added {datetime.timedelta(seconds=abs(total_seconds))} to the timer")
             await ctx.respond(f"{time_added} added.")
 
 
@@ -107,17 +113,17 @@ class ModCommands(commands.Cog):
             await initial_response.edit(content="That username does not exist. Please check your spelling and try again.")
             return
         
-        print(f"-> Adding new player {player_name}...")
+        logger.info(f"Adding new player {player_name}...")
         return_message = ""
         match db.add_player(player_name, player_discord_username, faction):
             case 0:
-                print("-+ Player added successfully")
+                logger.info("Player added successfully")
                 return_message = f"Player {player_name} ({player_discord_username}) successfully added."
             case 1:
-                print("-- Player add failed")
+                logger.warning("Player add failed")
                 return_message = f"There was a problem adding this player. Please try again."
             case -1:
-                print(f"-i Player {player_name} aleady in game, aborting")
+                logger.info(f"Player {player_name} aleady in game, aborting")
                 return_message = f"Player {player_name} ({player_discord_username}) is already in the game."
 
         await initial_response.edit(content=return_message)
@@ -138,15 +144,17 @@ class ModCommands(commands.Cog):
 
     async def player_info(self, ctx: discord.ApplicationContext):
         initial_response = await ctx.respond("```Getting the deets...```",ephemeral=True)
-        print("-> Getting all player info...")
+        logger.info("Getting all player info...")
         response_string = "```"
         if len(config.players) == 0:
             await initial_response.edit(content="```No players have been added yet.```")
+            logger.info("Empty response, no players in the game yet")
+            return
         for player in config.players:
             response_string += player.to_string(True)
             response_string += "\n-----\n"
         response_string += "```"
-        print("-+ Sent player info")
+        logger.info("Sent player info")
         await initial_response.edit(content=response_string)
 
     """
@@ -163,14 +171,14 @@ class ModCommands(commands.Cog):
     async def kill(self, ctx: discord.ApplicationContext, player_name: str):
         await ctx.response.defer(ephemeral=True)
 
-        print(f"-> Killing {player_name}...")
+        logger.info(f"Killing {player_name}...")
         match db.kill_player(player_name):
             case 1:
-                print(f"-- An error occurred when killing {player_name}")
+                logger.warning(f"An error occurred when killing {player_name}")
                 await ctx.respond("There was an unexpected error when processing the kill. Please try again.",ephemeral=True)
 
             case 0:
-                print("-+ Kill successful")
+                logger.info("Kill successful")
                 await ctx.respond(f"{player_name} has been killed. Remember to announce the death in daytime chat.",ephemeral=True)
 
 
@@ -186,15 +194,15 @@ class ModCommands(commands.Cog):
     @commands.has_any_role("Moderator","Main Moderator")
     async def end_day(self, ctx: discord.ApplicationContext):
 
-        print("-> Resetting all votes...")
+        logger.info("Resetting all votes...")
         match db.end_day():
             case 0:
-                print("-+ All votes reset")
+                logger.info("All votes reset")
                 config.majority = False
                 await ctx.respond("All votes have been reset.",ephemeral=True)
 
             case 1:
-                print("-- An error occurred when resetting votes")
+                logger.warning("An error occurred when resetting votes")
                 await ctx.respond("There was an unexpected error resetting votes. Please try again.",ephemeral=True)
 
     """
@@ -209,16 +217,16 @@ class ModCommands(commands.Cog):
     )
     @commands.has_any_role("Moderator","Main Moderator")
     async def set_vote_value(self, ctx: discord.ApplicationContext, player_name: str, value: int):
-        print(f"-> Setting vote value of {player_name} to {value}...")
+        logger.info(f"Setting vote value of {player_name} to {value}...")
         match db.set_vote_value(player_name,value):
             case 1:
-                print("-- An unexpected error occurred when setting vote value")
+                logger.info("An unexpected error occurred when setting vote value")
                 await ctx.respond("There was an unexpected error setting vote value. Please try again.",ephemeral=True)
             case -1:
-                print(f"-i Player {player_name} does not exist, aborting")
+                logger.info(f"Player {player_name} does not exist, aborting")
                 await ctx.respond(f"Player {player_name} does not exist. Please check your spelling and try again.",ephemeral=True)
             case 0:
-                print(f"-+ Player vote value set")
+                logger.info(f"Player vote value set")
                 await ctx.respond(f"{player_name}'s vote value has been set to {value}. NOTE: use /playerinfo to see players' vote values.",ephemeral=True)
 
     """
@@ -233,20 +241,20 @@ class ModCommands(commands.Cog):
     )
     @commands.has_any_role("Moderator","Main Moderator")
     async def add_votes(self, ctx: discord.ApplicationContext, player_name: str, value: int):
-        print(f"-> Adding {value} vote{"s" if value is not abs(1) else ""} to {player_name}...")
+        logger.info(f"Adding {value} vote{"s" if value is not abs(1) else ""} to {player_name}...")
         match db.mod_add_vote(player_name,value):
             case 1:
-                print(f"-- An unexpected error occurred when adding votes")
+                logger.warning(f"An unexpected error occurred when adding votes")
                 await ctx.respond("Unexpected error, please try again",ephemeral=True)
             case -1:
-                print(f"-i Player {player_name} not found, aborting")
+                logger.info(f"Player {player_name} not found, aborting")
                 await ctx.respond(f"Player {player_name} does not exist. Please check your spelling and try again.",ephemeral=True)
             case 1000:
                 config.majority = True
-                print(f"-+ Successfully added, majority reached")
+                logger.info(f"Successfully added, majority reached")
                 await ctx.respond(f"Vote added to {player_name}. NOTE: A MAJORITY HAS BEEN REACHED. Voting has been disabled for your players.",ephemeral=True)
             case 0:
-                print(f"-+ Successfully added")
+                logger.info(f"Successfully added")
                 await ctx.respond(f"Vote added to {player_name}.",ephemeral=True)
 
 
@@ -263,15 +271,15 @@ class ModCommands(commands.Cog):
     @commands.has_any_role("Moderator","Main Moderator")
     async def set_channel(self, ctx: discord.ApplicationContext):
         to_set = ctx.channel.id
+        logger.info("-> Adding new voting channel...")
         if to_set in config.valid_channel_ids:
             await ctx.respond("This channel is already set. Remove it with /removechannel.")
-            print("-i Channel already set")
+            logger.info("Channel already set, aborting")
             return
-        print("-> Adding new voting channel...")
         config.valid_channel_ids.append(ctx.channel.id)
         await ctx.respond(f"Channel set. Voting commands are now accessible from this channel.")
 
-        print("-+ Channel added")
+        logger.info("Channel added")
 
 
     """
@@ -286,15 +294,16 @@ class ModCommands(commands.Cog):
     @commands.has_any_role("Moderator","Main Moderator")
     async def remove_channel(self, ctx: discord.ApplicationContext):
         to_remove = int(ctx.channel.id)
+        logger.info("Removing voting channel...")
         if to_remove not in config.valid_channel_ids:
             await ctx.respond("This channel has not been set for voting.")
-            print("-i Channel has not been set for voting, skipping")
+            logger.info("Channel has not been set for voting, skipping")
             return
-        print("-> Removing voting channel...")
+        
         config.valid_channel_ids.remove(to_remove)
         await ctx.respond("Voting commands are no longer accessible from this channel.")
 
-        print("-+ Channel removed")
+        logger.info("Channel removed")
 
     """
     /setlogchannel
@@ -309,15 +318,16 @@ class ModCommands(commands.Cog):
     @commands.has_any_role("Moderator","Main Moderator")
     async def set_log_channel(self, ctx: discord.ApplicationContext):
         cur_channel = int(ctx.channel.id)
+        logger.info("Adding logging channel...")
         if cur_channel in config.log_channel_ids:
             await ctx.respond("This channel is already set for logging. Remove it with /removelogchannel.")
-            print("-i Channel already set")
+            logger.info("Channel already set")
             return
 
-        print("-> Adding logging channel...")
+        
         config.log_channel_ids.append(cur_channel)
         await ctx.respond("This channel has been flagged for logging events. Remove this flag with /removelogchannel.")
-        print("-+ Channel added")
+        logger.info("Channel added")
 
     """
     /removelogchannel
@@ -331,15 +341,15 @@ class ModCommands(commands.Cog):
     @commands.has_any_role("Moderator","Main Moderator")
     async def remove_log_channel(self, ctx: discord.ApplicationContext):
         to_remove = int(ctx.channel.id)
+        logger.info("Removing logging channel...")
         if to_remove not in config.log_channel_ids:
             await ctx.respond("This channel does not have a logging flag to remove.")
-            print("-i Log channel not set, skipping")
+            logger.info("Log channel not set, skipping")
             return
         
-        print("-> Removing logging channel...")
         config.log_channel_ids.remove(to_remove)
         await ctx.respond("Logging flag removed.")
-        print("-+ Channel removed")
+        logger.info("Channel removed")
 
     """
     /setmod
@@ -355,7 +365,7 @@ class ModCommands(commands.Cog):
     async def set_mod_to_dm(self, ctx: discord.ApplicationContext):
         config.mod_to_dm = ctx.interaction.user.id
         await ctx.respond(f"Preferences saved. You will be sent a DM if majority is reached or if the timer expires.")
-        print(f"-i User {self.bot.get_user(config.mod_to_dm)} flagged for bot DM when voting ends")
+        logger.info(f"User {self.bot.get_user(config.mod_to_dm)} flagged for bot DM when voting ends")
 
     """
     /unset
@@ -370,7 +380,7 @@ class ModCommands(commands.Cog):
     async def unset_mod_to_dm(self, ctx: discord.ApplicationContext):
         config.mod_to_dm = None
         await ctx.respond(f"Preferences saved.")
-        print(f"-i Mod username removed, bot will no longer DM")
+        logger.info(f"Mod username removed, bot will no longer DM")
 
 
 def setup(bot: discord.Bot): # this is called by Pycord to setup the cog

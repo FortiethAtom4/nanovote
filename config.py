@@ -1,4 +1,4 @@
-import datetime, dotenv, os
+import datetime, dotenv, os, logging
 from mafia import Player
 from utils.timer import Timer
 
@@ -11,7 +11,7 @@ cogs: list[str] = [
 ]
 #################################################
 
-mod_to_dm: str = None #sends a message to player who sets the timer
+mod_to_dm: str = None #sends a message to player who sets this value
 majority: bool = False # for when majority is reached
 
 timer: Timer = Timer() # Game timer
@@ -29,6 +29,9 @@ log_channel_ids: list[int] = []
 
 # player list fetched at bot start
 players: list[Player] = []
+
+#config formatter
+log_formatter = '%(asctime)s :: %(name)s :: %(levelname)s :: %(message)s'
 
 # private variables from the .env
 dotenv.load_dotenv(dotenv.find_dotenv(usecwd=True))
