@@ -85,7 +85,10 @@ class PlayerCommands(commands.Cog):
             case 0:
                 response_string += "[Time is up!]"
         response_string += "```"
-        logger.info("Sent votecount")
+        log_player_str: str = ""
+        for p in config.players:
+            log_player_str += f"{p.name}: {p.number_of_votes} {p.votes}"
+        logger.info(f"Sent votecount: [{log_player_str}]")
         await ctx.respond(content=response_string)
         # increment anti-spam timer
         config.command_delay_timer = datetime.datetime.now() + datetime.timedelta(seconds=config.command_delay_seconds)

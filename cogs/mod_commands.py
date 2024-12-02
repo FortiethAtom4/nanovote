@@ -382,6 +382,18 @@ class ModCommands(commands.Cog):
         await ctx.respond(f"Preferences saved.")
         logger.info(f"Mod username removed, bot will no longer DM")
 
+    """
+    /getlogs
+    Sends a copy of the bot's logs as a text file. 
+    """
+    @discord.slash_command(
+        name="getlogs",
+        guild_ids=[config.GUILD_ID],
+        description="MOD: Sends a copy of the bot's logs as a text file."
+    )
+    @commands.has_any_role("Moderator","Main Moderator")
+    async def get_logs(self, ctx: discord.ApplicationContext):
+
 
 def setup(bot: discord.Bot): # this is called by Pycord to setup the cog
     bot.add_cog(ModCommands(bot)) # add the cog to the bot
