@@ -42,6 +42,7 @@ All users have access to these commands.
 
 - `/checktime`: Gets the amount of time left before the day ends.
 - `/votecount`: Gets a list of all players in the game, their vote counts, the time remaining in the day, and the number of votes needed for majority.
+- `/player [playername]`: Displays information about a specific player.
 - `/vote [playername]`: Places your vote for a player to be lynched. Available for living players only.
 - `/unvote`: Revokes your vote on a player. Available for living players only.
 - `/help player`: Displays this message.'''
