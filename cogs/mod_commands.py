@@ -17,7 +17,7 @@ class ModCommands(commands.Cog):
     """
     @discord.slash_command(
         name="settimer",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="MOD: Sets a timer for the day to end."
     )
     @commands.has_any_role("Moderator","Main Moderator")
@@ -35,7 +35,7 @@ class ModCommands(commands.Cog):
     '''
     @discord.slash_command(
         name="togglemajority",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="MOD: toggles majority check."
     )
     @commands.has_any_role("Moderator","Main Moderator")
@@ -50,7 +50,7 @@ class ModCommands(commands.Cog):
     '''
     @discord.slash_command(
         name="toggletimer",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="MOD: Manually starts/stops the timer."
     )
     @commands.has_any_role("Moderator","Main Moderator")
@@ -68,7 +68,7 @@ class ModCommands(commands.Cog):
     """
     @discord.slash_command(
         name="addtime",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="MOD: Adds time to the timer. Negative values will subtract time instead."
     )
     @commands.has_any_role("Moderator","Main Moderator")
@@ -101,7 +101,7 @@ class ModCommands(commands.Cog):
     """
     @discord.slash_command(
         name="addplayer",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="MOD: Adds a player to a Mafia game."
     )
     @commands.has_any_role("Moderator","Main Moderator")
@@ -137,7 +137,7 @@ class ModCommands(commands.Cog):
     """
     @discord.slash_command(
         name="playerinfo",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="MOD: displays all info about current players."
     )
     @commands.has_any_role("Moderator","Main Moderator")
@@ -164,7 +164,7 @@ class ModCommands(commands.Cog):
     """
     @discord.slash_command(
         name="kill",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="MOD: Kills a player."
     )
     @commands.has_any_role("Moderator","Main Moderator")
@@ -188,7 +188,7 @@ class ModCommands(commands.Cog):
     """
     @discord.slash_command(
         name="resetvotes",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="MOD: Reset all votes."
     )
     @commands.has_any_role("Moderator","Main Moderator")
@@ -212,7 +212,7 @@ class ModCommands(commands.Cog):
     """
     @discord.slash_command(
         name="setvotevalue",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="MOD: Set the value of a player's votes."
     )
     @commands.has_any_role("Moderator","Main Moderator")
@@ -236,7 +236,7 @@ class ModCommands(commands.Cog):
     """
     @discord.slash_command(
         name="addvotes",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="MOD: add or subtract votes from a player."
     )
     @commands.has_any_role("Moderator","Main Moderator")
@@ -265,7 +265,7 @@ class ModCommands(commands.Cog):
     """
     @discord.slash_command(
         name="setchannel",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="MOD: adds the current channel to the list of valid voting channels."
     )
     @commands.has_any_role("Moderator","Main Moderator")
@@ -288,7 +288,7 @@ class ModCommands(commands.Cog):
     """
     @discord.slash_command(
         name="removechannel",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="MOD: Removes the current channel from the list of valid voting channels."
     )
     @commands.has_any_role("Moderator","Main Moderator")
@@ -312,7 +312,7 @@ class ModCommands(commands.Cog):
     """
     @discord.slash_command(
         name="setlogchannel",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="MOD: flags the current channel for logging voting events."
     )
     @commands.has_any_role("Moderator","Main Moderator")
@@ -335,7 +335,7 @@ class ModCommands(commands.Cog):
     """
     @discord.slash_command(
         name="removelogchannel",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="MOD: removes flag from the configured logging channel."
     )
     @commands.has_any_role("Moderator","Main Moderator")
@@ -358,7 +358,7 @@ class ModCommands(commands.Cog):
     """
     @discord.slash_command(
         name="setmod",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="MOD: Saves your username. You will be sent a DM when voting ends."
     )
     @commands.has_any_role("Moderator","Main Moderator")
@@ -373,7 +373,7 @@ class ModCommands(commands.Cog):
     """
     @discord.slash_command(
         name="unsetmod",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="MOD: Removes your username from the bot. You will no longer be sent a DM if voting ends."
     )
     @commands.has_any_role("Moderator","Main Moderator")
@@ -388,7 +388,7 @@ class ModCommands(commands.Cog):
     """
     @discord.slash_command(
         name="getlogs",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="MOD: Sends a copy of the bot's logs as a text file."
     )
     @commands.has_any_role("Moderator","Main Moderator")

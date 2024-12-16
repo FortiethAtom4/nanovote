@@ -17,7 +17,7 @@ class PlayerCommands(commands.Cog):
     """
     @discord.slash_command(
         name="checktime",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="Gets the amount of time left."
     )
     async def check_time(self,ctx: discord.ApplicationContext):
@@ -37,7 +37,7 @@ class PlayerCommands(commands.Cog):
     """
     @discord.slash_command(
         name="votecount",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="Gets all players in the game and their vote counts."
     )
     async def vote_count(self, ctx: discord.ApplicationContext):
@@ -98,7 +98,7 @@ class PlayerCommands(commands.Cog):
     """
     @discord.slash_command(
         name="vote",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="Vote for a player to be lynched."
     )
     async def vote(self, ctx: discord.ApplicationContext, voted_for_name: str):
@@ -168,7 +168,7 @@ class PlayerCommands(commands.Cog):
     """
     @discord.slash_command(
         name="unvote",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="Revoke your vote on a player."
     )
     async def unvote(self, ctx: discord.ApplicationContext):
@@ -219,7 +219,7 @@ class PlayerCommands(commands.Cog):
     """
     @discord.slash_command(
         name="player",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="Displays information about a specific player."
     )
     async def check_player(self, ctx: discord.ApplicationContext, player_name: str):

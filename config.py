@@ -10,6 +10,9 @@ cogs: list[str] = [
     "bot_admin_commands"
 ]
 #################################################
+server_ids: list[int] = [
+    334031029352267776 #shrek server
+]
 
 mod_to_dm: str = None #sends a message to player who sets this value
 majority: bool = False # for when majority is reached
@@ -36,7 +39,7 @@ log_formatter = '%(asctime)s :: %(name)s :: %(levelname)s :: %(message)s'
 # private variables from the .env
 dotenv.load_dotenv(dotenv.find_dotenv(usecwd=True))
 TOKEN = os.getenv('DISCORD_TOKEN')
-GUILD_ID = int(os.getenv('GUILD_ID'))
+GUILD_IDS: list[int] = [int(x) for x in (os.getenv('GUILD_IDS')).split(",")]
 USER = os.getenv("MONGODB_USER")
 PASS = os.getenv("MONGODB_PASS")
 DB_NAME = os.getenv("DB_NAME")

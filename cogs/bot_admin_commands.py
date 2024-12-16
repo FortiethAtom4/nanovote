@@ -14,7 +14,7 @@ class BotAdminCommands(commands.Cog):
     """
     @discord.slash_command(
         name="shutdown",
-        guild_ids=[config.GUILD_ID],
+        guild_ids=config.GUILD_IDS,
         description="BOT OWNER: Shuts the bot down."
     )
     @commands.is_owner()
@@ -27,7 +27,7 @@ class BotAdminCommands(commands.Cog):
         exit()
 
     help: discord.SlashCommandGroup = discord.SlashCommandGroup(name="help",description="Various help commands",
-                                                                guild_ids=[config.GUILD_ID])
+                                                                guild_ids=config.GUILD_IDS)
 
     """
     /help player
