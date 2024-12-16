@@ -39,7 +39,7 @@ log_formatter = '%(asctime)s :: %(name)s :: %(levelname)s :: %(message)s'
 # private variables from the .env
 dotenv.load_dotenv(dotenv.find_dotenv(usecwd=True))
 TOKEN = os.getenv('DISCORD_TOKEN')
-GUILD_IDS: list[int] = [int(x) for x in (os.getenv('GUILD_IDS')).split(",")]
+GUILD_IDS: list[int] = [int(x) for x in (os.getenv('GUILD_IDS')).split(",")] #allows multiple guild IDs separated by comma
 USER = os.getenv("MONGODB_USER")
 PASS = os.getenv("MONGODB_PASS")
 DB_NAME = os.getenv("DB_NAME")
