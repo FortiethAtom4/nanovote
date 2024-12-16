@@ -69,6 +69,10 @@ def add_player(player_name, player_username, player_faction) -> int:
 def get_majority() -> int:
     return len(config.players)/2 + 1
 
+def get_player(player_name: str) -> dict:
+    player: None | dict = next((player for player in config.players if player.name.lower() == player_name.lower()),None)
+    return None if player == None else player.__dict__
+    
 # gets all player data from DB
 def get_all_players() -> list[Player]:
     try:

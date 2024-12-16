@@ -6,11 +6,8 @@ logging.basicConfig(filename='mafia.log', encoding='utf-8', level=logging.INFO, 
 
 class PlayerCommands(commands.Cog):
 
-
-
     def __init__(self, bot: discord.Bot): # this is a special method that is called when the cog is loaded
         self.bot = bot
-
 
     """ 
     /checktime
@@ -215,6 +212,33 @@ class PlayerCommands(commands.Cog):
                     await log_channel.send(f"[{unvoter_name} unvoted.]({resp.jump_url})")
 
                 logger.info(f"{unvoter_name} unvoted")
+
+    """ 
+    /player
+    Displays information about a specific player.
+    """
+    @discord.slash_command(
+        name="player",
+        guild_ids=[config.GUILD_ID],
+        description="Displays information about a specific player."
+    )
+    async def check_player(self, ctx: discord.ApplicationContext, player_name: str):
+        player: dict = db.get_player(player_name)
+        if player == None:
+            await ctx.respond(f"Player \'{player_name}\' does not exist. Please check your spelling and try again.")
+            return
+        return_msg: str = f"```ini\n[Player Name: {player.get("name")}]\n"
+        voters = ""
+        vl = len(player.get("votes"))
+        if vl > 0:
+            for i in range(vl - 1):
+                voters += player.get("votes")[i] + ", "
+            voters += player.get("votes")[vl - 1]
+        return_msg += f"[Votes ({player.get("number_of_votes")}): {voters}]\n"
+        return_msg += f"[Currently voting for: {player.get("voted_for")}]```"
+        await ctx.respond(return_msg)
+        
+        
 
 def setup(bot: discord.Bot): # this is called by Pycord to setup the cog
     bot.add_cog(PlayerCommands(bot)) # add the cog to the bot
