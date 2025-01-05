@@ -1,7 +1,7 @@
 # SETUP
 
 ## PROGRAM SETUP
-Prerequisites: Git, Python
+Prerequisites: Git, Python 3
 
 1. Clone this repo.
 
@@ -41,9 +41,10 @@ All users have access to these commands.
 
 - `/checktime`: Gets the amount of time left before the day ends.
 - `/votecount`: Gets a list of all players in the game, their vote counts, the time remaining in the day, and the number of votes needed for majority.
+- `/player [playername]`: Displays information about a specific player.
 - `/vote [playername]`: Places your vote for a player to be lynched. Available for living players only.
 - `/unvote`: Revokes your vote on a player. Available for living players only.
-- `/help player`: Displays this message.'
+- `/help player`: Displays this message.
 
 ## MOD COMMANDS
 Only users with the Moderator or Main Moderator roles can use these commands.
@@ -56,8 +57,9 @@ Only users with the Moderator or Main Moderator roles can use these commands.
 - `/setchannel`: Flags a channel for voting. Players may only vote in channels set with this command.
 - `/setlogchannel`: Flags a channel for logging. The bot will record votes and unvotes in log channels.
 - `/setmod`: Saves your username. You will be sent a DM when voting ends. NOTE: Only one username can be saved at a time. 
+- `/unsetmod`: Removes your username from the bot. You will no longer be sent a DM if voting ends.
 ### TIMER
-- `/settimer [time_hours] (time_minutes)`: Sets the timer for the day to end. Players can vote once the timer is started. The mod who sets this timer will be sent a DM when time is up.
+- `/settimer [time_hours] (time_minutes)`: Sets the timer for the day to end. Players can vote once the timer is started.
 - `/addtime [time_hours] (time_minutes)`: Adds time to the timer. Negative values subtract from the timer.
 - `/toggletimer`: Toggles the timer on and off. Players cannot vote while the timer is off.
 ### VOTE MANAGEMENT
@@ -70,15 +72,11 @@ Only users with the Moderator or Main Moderator roles can use these commands.
 
 # HOW TO ADD YOUR OWN CUSTOM COMMANDS
 
-The bot has been organized so that adding new commands is easy to do without getting too deep in the weeds of it all. Here are the high-level steps involved in making a new class of commands and adding them to the bot:
-1. Create a copy of one of the `.py` files in the `cogs` folder. Make sure your copy is also in that same folder.
-2. Change the filename to whatever you want. 
-3. In your new file, change the class name at the top to a name of your choosing. Just make sure there isn't another cog with the same name. 
-    - After you rename the class, you'll need to change the name within the `setup` method at the bottom of the file to the name you chose.
-4. Delete all the code in that cog class EXCEPT the function called `__init__`. Be careful not to delete `setup`.
-5. Code whatever you want in your new mostly-empty class. If you're unfamiliar with making Discord bot commands, feel free to copy-paste commands from the other cogs to try them out, or peruse the Pycord documentation for more info.
-6. In `config.py`, add the name of your file to the `cogs` list variable. Make sure not to include the `.py` extension; you just need the base name. 
-If everything else has been done right, your commands should now be available in the bot for testing/usage when you run `python nanovote.py`.
+The bot has been organized so that adding to it is easy to do without getting too deep in the weeds of it all. You can add a suite of custom commands by simply programming them in the file `custom_commands.py`. 
+- Remember: Discord bot commands must have unique names. When you write new commands, be sure to choose names that are not already in use elsewhere!
+- You can rename the file/class to whatever you would like, but if you do you will need to update the `cogs` list variable in `config.py` with the updated file name.
+- If you're unfamiliar with making Discord bot commands, feel free to copy-paste code from the other cogs to try them out, or peruse the [Pycord documentation](https://docs.pycord.dev/en/stable/) for more info.
+Once everything has been added, your commands should now be available in the bot for testing/usage when you run `python nanovote.py`.
 
 # KNOWN BUGS
 1. setting a player's vote value after they have voted does not update any current votes.

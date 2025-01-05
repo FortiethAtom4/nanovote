@@ -58,8 +58,9 @@ class ModCommands(commands.Cog):
         if config.timer.paused_or_stopped() == 0:
             await ctx.respond("Timer cannot be toggled as no time has been set. Use /settimer first.",ephemeral=True)
             return
-        logger.info(f"Timer {("started" if config.timer.toggle() else "stopped")}")
-        await ctx.respond(f"Timer {("started" if config.timer.toggle() else "stopped")}.")
+        return_string = f"Timer {("started" if config.timer.toggle() else "stopped")}."
+        logger.info(return_string[:-1]) #getting rid of the punctuation makes it seems more techy
+        await ctx.respond(return_string)
 
     """
     /addtime

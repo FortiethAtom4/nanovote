@@ -2,7 +2,7 @@ import datetime, dotenv, os, logging
 from mafia import Player
 from utils.timer import Timer
 
-########## ADD YOUR COG FILE NAME HERE ##########
+########## ADD YOUR COG FILE NAME TO THIS LIST ##########
 cogs: list[str] = [
     "player_commands",
     "mod_commands",
@@ -10,9 +10,9 @@ cogs: list[str] = [
     "bot_admin_commands"
 ]
 #################################################
-server_ids: list[int] = [
-    334031029352267776 #shrek server
-]
+# server_ids: list[int] = [
+#     334031029352267776 #shrek server ID
+# ]
 
 mod_to_dm: str = None #sends a message to player who sets this value
 majority: bool = False # for when majority is reached
