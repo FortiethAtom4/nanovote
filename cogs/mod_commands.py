@@ -397,6 +397,46 @@ class ModCommands(commands.Cog):
         with open("mafia.log") as logs:
             await ctx.channel.send(file=discord.File(logs,"mafia.log"))
 
+    """
+    /togglerole
+    Toggles a player's role. If that player is a moderator, they will be given mod role, and vice versa.
+    WARNING: be very careful that this is used on the correct user.
+    """
+    @discord.slash_command(
+        name="togglerole",
+        guild_ids=config.GUILD_IDS,
+        description="MOD: Grants a user the Moderator role, or removes it if they have it."
+    )
+    @commands.has_any_role("Moderator","Main Moderator")
+    async def togglerole(self, ctx, user: str):
+        all_members = list([x.name for x in ctx.guild.members])
+        if user not in all_members:
+            await ctx.respond(f"User {user} does not exist. Please check your spelling and try again.")
+            return
+        
+        user_member: discord.Member = None
+        # this sucks
+        for member in ctx.guild.members:
+            if member.name == user:
+                user_member = member
+                break
+        
+        # this is weird, is there a simpler way to do this?
+        guild: discord.Guild = self.bot.get_guild(ctx.guild.id)
+        mod_role = guild.get_role(int(config.MOD_ID))
+        if mod_role in user_member.roles:
+            await user_member.remove_roles(mod_role)
+            await ctx.respond(f"User {user_member.name} has lost the mod role.")
+            logger.info(f"User {user_member.name} has lost the mod role")
+        else:
+            await user_member.add_roles(mod_role)
+            await ctx.respond(f"User {user_member.name} has received the mod role.")
+            logger.info(f"User {user_member.name} has gained the mod role")
+
+        
+        
+    
+
 
 def setup(bot: discord.Bot): # this is called by Pycord to setup the cog
     bot.add_cog(ModCommands(bot)) # add the cog to the bot

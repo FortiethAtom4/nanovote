@@ -45,4 +45,5 @@ PASS = os.getenv("MONGODB_PASS")
 DB_NAME = os.getenv("DB_NAME")
 COLLECTION = os.getenv("DB_COLLECTION")
 CHANNEL_COLLECTION = os.getenv("DB_CHANNEL_COLLECTION")
+MOD_ID = os.getenv("MOD_ID")
 db_URL = f"mongodb+srv://{USER}:{PASS}@nanobot.lab1zmc.mongodb.net/"
