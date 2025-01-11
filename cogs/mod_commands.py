@@ -394,8 +394,9 @@ class ModCommands(commands.Cog):
     )
     @commands.has_any_role("Moderator","Main Moderator")
     async def get_logs(self, ctx: discord.ApplicationContext):
-        with open("mafia.log") as logs:
-            await ctx.channel.send(file=discord.File(logs,"mafia.log"))
+        await ctx.respond("This command is not yet ready. Please come back later.")
+        # with open("mafia.log") as logs:
+            # await ctx.channel.send(file=discord.File(logs,"mafia.log"))
 
     """
     /togglerole
