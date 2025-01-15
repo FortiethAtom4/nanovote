@@ -439,11 +439,11 @@ class ModCommands(commands.Cog):
     @discord.slash_command(
         name="newgame",
         guild_ids=config.GUILD_IDS,
-        description="MOD: Clears the player list and all voting channels."
+        description="MOD: Clears all saved data."
     )
     @commands.has_any_role("Moderator","Main Moderator")
     async def new_game(self, ctx):
-        await ctx.respond("Are you sure you want to reset the game? **This will remove all players and channels.** (type 'yes' or 'y' to confirm, type anything else to cancel.)")
+        await ctx.respond("Are you sure you want to start a new game from scratch? **This will remove all saved players and channels.** (type 'yes' or 'y' to confirm, type anything else to cancel.)")
 
         def check(m): # checking if it's the same user and channel
             return m.author == ctx.author and m.channel == ctx.channel
@@ -466,7 +466,7 @@ class ModCommands(commands.Cog):
         config.mod_to_dm = None
         config.timer.stop()
         db.persist_updates()
-        await ctx.channel.send("Game has been reset.")
+        await ctx.channel.send("Game data has been cleared.")
         logger.info("Game reset")
         
         
