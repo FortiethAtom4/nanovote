@@ -42,6 +42,14 @@ class Timer:
         self.pause_time = None
         return True
     
+    def stop(self) -> bool:
+        if self.paused_or_stopped() != 0:
+            self.stopped = True
+            self.end_time = datetime.datetime.now()
+            self.pause_time = None
+            return True
+        return False
+    
     def toggle(self):
         if self.stopped:
             return self.unpause()

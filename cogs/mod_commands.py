@@ -457,13 +457,17 @@ class ModCommands(commands.Cog):
         # if response is different than yes / y - return
         if response.content.lower() not in ("yes", "y"): # lower() makes everything lowercase to also catch: YeS, YES etc.
             await ctx.channel.send("Cancelled.")
+            logger.info("Game not reset, user cancelled")
             return
         
         config.valid_channel_ids = []
         config.log_channel_ids = []
         config.players = []
         config.mod_to_dm = None
+        config.timer.stop()
+        db.persist_updates()
         await ctx.channel.send("Game has been reset.")
+        logger.info("Game reset")
         
         
         
