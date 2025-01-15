@@ -1,4 +1,4 @@
-import discord, datetime, config, utils.db as db, logging
+import discord, datetime, config, utils.db as db, logging, asyncio
 from discord.ext import commands
 
 logger = logging.getLogger(__name__)
@@ -433,6 +433,40 @@ class ModCommands(commands.Cog):
             await user_member.add_roles(mod_role)
             await ctx.respond(f"User {user_member.name} has received the mod role.")
             logger.info(f"User {user_member.name} has gained the mod role")
+
+
+
+    @discord.slash_command(
+        name="newgame",
+        guild_ids=config.GUILD_IDS,
+        description="MOD: Clears the player list and all voting channels."
+    )
+    @commands.has_any_role("Moderator","Main Moderator")
+    async def new_game(self, ctx):
+        await ctx.respond("Are you sure you want to reset the game? **This will remove all players and channels.** (type 'yes' or 'y' to confirm, type anything else to cancel.)")
+
+        def check(m): # checking if it's the same user and channel
+            return m.author == ctx.author and m.channel == ctx.channel
+
+        try: # waiting for message
+            response = await self.bot.wait_for('message', check=check, timeout=30.0) # timeout - how long bot waits for message (in seconds)
+        except asyncio.TimeoutError: # returning after timeout
+            await ctx.channel.send("Timed out.")
+            return
+
+        # if response is different than yes / y - return
+        if response.content.lower() not in ("yes", "y"): # lower() makes everything lowercase to also catch: YeS, YES etc.
+            await ctx.channel.send("Cancelled.")
+            return
+        
+        config.valid_channel_ids = []
+        config.log_channel_ids = []
+        config.players = []
+        config.mod_to_dm = None
+        await ctx.channel.send("Game has been reset.")
+        
+        
+        
 
         
         

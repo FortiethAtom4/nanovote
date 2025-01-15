@@ -51,7 +51,7 @@ async def do_timer():
     while True:
         if not config.timer.stopped:
             if(config.timer.increment()):
-                if config.mod_to_dm != "":
+                if config.mod_to_dm != None:
                     user = await bot.fetch_user(config.mod_to_dm)
                     await user.send("Your timer is up!")
                 print("-> Timer expired, persisting updates...")
