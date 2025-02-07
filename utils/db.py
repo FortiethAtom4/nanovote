@@ -63,6 +63,7 @@ def add_player(player_name, player_username, player_faction) -> int:
 
     new_player = Player(player_name, player_username, player_faction)
     config.players.append(new_player)
+    config.player_names.append(new_player.name)
     return 0
 
     
@@ -88,6 +89,9 @@ def get_all_players() -> list[Player]:
             temp = object.__new__(Player)
             temp.__dict__ = player
             ret_list.append(temp)
+
+        # update player names too
+        config.player_names = [player.name for player in ret_list]
         
         return ret_list
     except:
@@ -189,6 +193,7 @@ def kill_player(player_name: str) -> int:
 
 #   do the deed
     config.players.remove(player_to_kill)
+    config.player_names.remove(player_to_kill.name)
     return 0
 
 def persist_updates():

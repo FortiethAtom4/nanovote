@@ -1,5 +1,6 @@
 import discord, logging, datetime
-from discord.ext import commands
+from discord.ext import commands, tasks
+from discord.ext.commands.errors import MissingAnyRole
 from asyncio import sleep
 
 # local imports
@@ -46,7 +47,6 @@ async def on_ready():
     logger.info("Ready")
     
 # checks and updates the time. Used for keeping track of day/night time
-@bot.event
 async def do_timer():
     while True:
         if not config.timer.stopped:
@@ -60,7 +60,6 @@ async def do_timer():
         await sleep(1)
 
 # updates the database automatically at regular intervals
-@bot.event
 async def do_update():
     config.update_timer.start(datetime.timedelta(minutes=config.update_interval))
     while True:
@@ -70,6 +69,8 @@ async def do_update():
             print(f"-+ {datetime.datetime.today()} Update completed.")
             config.update_timer.start(datetime.timedelta(minutes=config.update_interval))
         await sleep(1)
+
+
 
 bot.loop.create_task(do_timer())
 bot.loop.create_task(do_update())

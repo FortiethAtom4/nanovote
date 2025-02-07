@@ -69,6 +69,7 @@ Only users with the Moderator or Main Moderator roles can use these commands.
 - `/setlogchannel`: Flags a channel for logging. The bot will record votes and unvotes in log channels.
 - `/setmod`: Saves your username. You will be sent a DM when voting ends. NOTE: Only one username can be saved at a time. 
 - `/unsetmod`: Removes your username from the bot. You will no longer be sent a DM if voting ends.
+- `/togglemod [player_discord_username]`: Grants a user the Moderator role, or removes it if they have it.
 ### TIMER
 - `/settimer [time_hours] (time_minutes)`: Sets the timer for the day to end. Players can vote once the timer is started.
 - `/addtime [time_hours] (time_minutes)`: Adds time to the timer. Negative values subtract from the timer.
@@ -82,6 +83,28 @@ Only users with the Moderator or Main Moderator roles can use these commands.
 - `/kill [player_name]`: Kills a player, removing them from the game.'''
         await ctx.respond(help_string,ephemeral=True)
 
+
+    
+    """
+    /help mafia
+    Shows a help message for scum commands.
+    """
+    @help.command(
+        description="Displays a help message for scum."
+    )
+    async def mafia(self, ctx: discord.ApplicationContext):
+        help_string: str = '''## SCUM COMMANDS
+Only scum players or players with the Moderator or Main Moderator roles can use these commands, depending on the command.
+
+- `/help mafia`: Displays this message.
+### SCUM-SPECIFIC COMMANDS
+- `/mafia player [player_name]`: Toggles a player as a member/not a member of the mafia.
+- `/mafia kill [player_name]`: Choose a player to lock in for tonight's nightkill.
+- `/mafia viewplayer`: Displays the name of the player mafia has chosen for tonight's nightkill.
+### MOD COMMANDS FOR SCUM
+- `/mafia channel`: Toggles the current channel as the channel for scum commands. Scum can only nightkill in a channel flagged with this command.
+- `/mafia reset`: Reset the scum nightkill.'''
+        await ctx.respond(help_string,ephemeral=True)
 
 
 

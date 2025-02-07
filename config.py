@@ -5,6 +5,7 @@ from utils.timer import Timer
 ########## ADD YOUR COG FILE NAME TO THIS LIST ##########
 cogs: list[str] = [
     "player_commands",
+    "mafia_commands",
     "mod_commands",
     "custom_commands",
     "bot_admin_commands"
@@ -30,8 +31,21 @@ command_delay_seconds: int = 10 # Total seconds to delay
 valid_channel_ids: list[int] = []
 log_channel_ids: list[int] = []
 
+# The mafia channel ID, not saved to DB (for now)
+mafia_channel_id: int = None
+
+# string to save the name of players chosen by mafia to be nightkilled
+nightkilled_player: str = ""
+
 # player list fetched at bot start
 players: list[Player] = []
+player_names: list[str] = []
+
+# helper function for selecting players
+def get_player_names(ctx):
+    return player_names
+
+mafia: list[Player] = [] # list of specifically mafia players
 
 #config formatter
 log_formatter = '%(asctime)s :: %(name)s :: %(levelname)s :: %(message)s'

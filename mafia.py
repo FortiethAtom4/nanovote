@@ -10,6 +10,7 @@ class Player:
         self.votes: list[str] = []
         self.voted_for = ""
         self.vote_value = 1 # used for doublevoters, negative voters, etc.
+        self.mafia: bool = False # for mafia list
 
 
 #   default faction is "Town," so this method sets to other factions.
@@ -33,7 +34,7 @@ class Player:
         if not admin:
             return return_string
         # add info if admin
-        return_string += f"\nFaction: {self.faction}"
+        return_string += f"\nFaction: {self.faction} {"(Mafia)" if self.mafia else ""}"
         return_string += f"\nVote value: {self.vote_value}"
         return_string += f"\nCurrently voting for: {self.voted_for}"
         return return_string

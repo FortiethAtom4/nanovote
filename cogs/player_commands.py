@@ -138,6 +138,7 @@ class PlayerCommands(commands.Cog):
                 await initial_response.edit(content=f"There was an unexpected error when processing vote for {voted_for_name}. Please try again.")
                 logger.warning(f"An unexpected error occurred when sending in {ctx.user.name}'s vote for {voted_for_name}")
             case 1000:
+                voted_for_name = next(player for player in config.players if player.name.lower() == voted_for_name.lower()).name # get the name with the capital letter
                 await initial_response.edit(content=f"You voted for {voted_for_name}. **MAJORITY REACHED**")
                 if config.mod_to_dm != None:
                     mod = await self.bot.fetch_user(config.mod_to_dm)
@@ -153,6 +154,7 @@ class PlayerCommands(commands.Cog):
                 config.majority = True
                 logger.info(f"{voter_name} voted for {voted_for_name} and a majority was reached")
             case 0:
+                voted_for_name = next(player for player in config.players if player.name.lower() == voted_for_name.lower()).name 
                 await initial_response.edit(content=f"You voted for {voted_for_name}.")
                 resp: discord.Message = await initial_response.original_response()
                 for c in config.log_channel_ids:
