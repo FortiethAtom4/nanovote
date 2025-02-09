@@ -66,6 +66,7 @@ class MafiaCommands(commands.Cog):
        if user == None:
            await ctx.respond("You are not in this game!")
            return
+       
        if not user.mafia:
            await ctx.respond("You are not a member of mafia!")
            return
@@ -119,7 +120,7 @@ class MafiaCommands(commands.Cog):
         user = next((player for player in config.players if player.username == ctx.user.name),None)
         if user == None or not user.mafia:
             if "Moderator" not in [role.name for role in ctx.user.roles]:
-                await ctx.respond("You are not allowed to use this command.")
+                await ctx.respond("You are not allowed to use this command.",ephemeral=True)
                 return
         
         if config.nightkilled_player == "":
