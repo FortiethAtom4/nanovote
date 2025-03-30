@@ -43,7 +43,7 @@ class PlayerCommands(commands.Cog):
     async def vote_count(self, ctx: discord.ApplicationContext):
         time_rem: datetime.timedelta = config.command_delay_timer - datetime.datetime.now()
         if time_rem > datetime.timedelta(seconds=0):
-            await ctx.respond(f"```ini\n[Please wait {time_rem.seconds} second{"" if time_rem.seconds == 1 else "s"} before using /votecount again.]```",ephemeral=True)
+            await ctx.respond(f"```ini\n[Please wait {time_rem.seconds} second{'' if time_rem.seconds == 1 else 's'} before using /votecount again.]```",ephemeral=True)
             logger.info("Votecount spam prevented")
             return
 
