@@ -61,7 +61,7 @@ class ModCommands(commands.Cog):
         if config.timer.paused_or_stopped() == 0:
             await ctx.respond("Timer cannot be toggled as no time has been set. Use /settimer first.",ephemeral=True)
             return
-        return_string = f"Timer {("started" if config.timer.toggle() else "stopped")}."
+        return_string = f"Timer {('started' if config.timer.toggle() else 'stopped')}."
         logger.info(return_string[:-1]) #getting rid of the punctuation makes it seems more techy
         await ctx.respond(return_string)
 
@@ -246,7 +246,7 @@ class ModCommands(commands.Cog):
     )
     @commands.has_any_role("Moderator","Main Moderator")
     async def add_votes(self, ctx: discord.ApplicationContext, player_name: str, value: int):
-        logger.info(f"Adding {value} vote{"s" if value is not abs(1) else ""} to {player_name}...")
+        logger.info(f"Adding {value} vote{'s' if value is not abs(1) else ''} to {player_name}...")
         match db.mod_add_vote(player_name,value):
             case 1:
                 logger.warning(f"An unexpected error occurred when adding votes")
