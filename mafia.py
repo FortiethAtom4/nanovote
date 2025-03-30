@@ -34,7 +34,7 @@ class Player:
         if not admin:
             return return_string
         # add info if admin
-        return_string += f"\nFaction: {self.faction} {"(Mafia)" if self.mafia else ""}"
+        return_string += f"\nFaction: {self.faction} {"\(Mafia\)" if self.mafia else ""}"
         return_string += f"\nVote value: {self.vote_value}"
         return_string += f"\nCurrently voting for: {self.voted_for}"
         return return_string

@@ -103,7 +103,7 @@ Only scum players or players with the Moderator or Main Moderator roles can use 
 - `/mafia viewplayer`: Displays the name of the player mafia has chosen for tonight's nightkill.
 ### MOD COMMANDS FOR SCUM
 - `/mafia channel`: Toggles the current channel as the channel for scum commands. Scum can only nightkill in a channel flagged with this command.
-- `/mafia reset`: Reset the scum nightkill.'''
+- `/mafia reset`: Resets the scum nightkill.'''
         await ctx.respond(help_string,ephemeral=True)
 
 

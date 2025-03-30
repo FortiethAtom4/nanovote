@@ -1,6 +1,5 @@
 import pymongo
 import pymongo.collection
-from math import trunc
 
 # local imports
 import config
