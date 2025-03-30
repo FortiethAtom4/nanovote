@@ -229,15 +229,15 @@ class PlayerCommands(commands.Cog):
         if player == None:
             await ctx.respond(f"Player \'{player_name}\' does not exist. Please check your spelling and try again.")
             return
-        return_msg: str = f"```ini\n[Player Name: {player.get("name")}]\n"
+        return_msg: str = f"```ini\n[Player Name: {player.get('name')}]\n"
         voters = ""
         vl = len(player.get("votes"))
         if vl > 0:
             for i in range(vl - 1):
                 voters += player.get("votes")[i] + ", "
             voters += player.get("votes")[vl - 1]
-        return_msg += f"[Votes ({player.get("number_of_votes")}): {voters}]\n"
-        return_msg += f"[Currently voting for: {player.get("voted_for")}]```"
+        return_msg += f"[Votes ({player.get('number_of_votes')}): {voters}]\n"
+        return_msg += f"[Currently voting for: {player.get('voted_for')}]```"
         await ctx.respond(return_msg)
         
         
