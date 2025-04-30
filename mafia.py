@@ -1,8 +1,8 @@
 # representation of a mafia game.
-
+import discord
 
 class Player:
-    def __init__(self,name: str, username: str, faction: str = "Town"):
+    def __init__(self,name: str, username: discord.Member, faction: str = "Town"):
         self.name = name
         self.faction = faction
         self.username = username

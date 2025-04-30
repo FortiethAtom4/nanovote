@@ -110,12 +110,8 @@ class ModCommands(commands.Cog):
     )
     @commands.has_any_role("Moderator","Main Moderator")
 
-    async def add_player(self, ctx: discord.ApplicationContext, player_name: str, player_discord_username: str, faction: str):
+    async def add_player(self, ctx: discord.ApplicationContext, player_name: str, player_discord_username: discord.Member, faction: str):
         initial_response = await ctx.respond(f"Throwing {player_name}'s hat in the ring...",ephemeral=True)
-        real_users = [member.name for member in ctx.bot.get_all_members()]
-        if player_discord_username not in real_users:
-            await initial_response.edit(content="That username does not exist. Please check your spelling and try again.")
-            return
         
         logger.info(f"Adding new player {player_name}...")
         return_message = ""
@@ -256,6 +252,7 @@ class ModCommands(commands.Cog):
                 await ctx.respond(f"Player {player_name} does not exist. Please check your spelling and try again.",ephemeral=True)
             case 1000:
                 config.majority = True
+                config.timer.pause()
                 logger.info(f"Successfully added, majority reached")
                 await ctx.respond(f"Vote added to {player_name}. NOTE: A MAJORITY HAS BEEN REACHED. Voting has been disabled for your players.",ephemeral=True)
             case 0:
@@ -412,31 +409,19 @@ class ModCommands(commands.Cog):
         description="MOD: Grants a user the Moderator role, or removes it if they have it."
     )
     @commands.has_any_role("Moderator","Main Moderator")
-    async def toggle_mod(self, ctx, user: str):
+    async def toggle_mod(self, ctx, user: discord.Member):
         try:
-            all_members = list([x.name for x in ctx.guild.members])
-            if user not in all_members:
-                await ctx.respond(f"User {user} does not exist. Please check your spelling and try again.")
-                return
-            
-            user_member: discord.Member = None
-            # this sucks
-            for member in ctx.guild.members:
-                if member.name == user:
-                    user_member = member
-                    break
-            
             # this is weird, is there a simpler way to do this?
             guild: discord.Guild = self.bot.get_guild(ctx.guild.id)
             mod_role = guild.get_role(int(config.MOD_ID))
-            if mod_role in user_member.roles:
-                await user_member.remove_roles(mod_role)
-                await ctx.respond(f"User {user_member.name} has lost the mod role.")
-                logger.info(f"User {user_member.name} has lost the mod role")
+            if mod_role in user.roles:
+                await user.remove_roles(mod_role)
+                await ctx.respond(f"User {user.name} has lost the mod role.")
+                logger.info(f"User {user.name} has lost the mod role")
             else:
-                await user_member.add_roles(mod_role)
-                await ctx.respond(f"User {user_member.name} has received the mod role.")
-                logger.info(f"User {user_member.name} has gained the mod role")
+                await user.add_roles(mod_role)
+                await ctx.respond(f"User {user.name} has received the mod role.")
+                logger.info(f"User {user.name} has gained the mod role")
         except discord.ext.commands.errors.MissingAnyRole:
             await ctx.respond("You do not have permission to use this command.")
 
