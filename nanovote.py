@@ -15,7 +15,7 @@ for cog in config.cogs:
     bot.load_extension(f"cogs.{cog}")
 
 
-# why did i waste my time adding this
+# style points
 print("""---------##---------
 -------######-------
 -----##########-----
