@@ -115,7 +115,7 @@ class ModCommands(commands.Cog):
         
         logger.info(f"Adding new player {player_name}...")
         return_message = ""
-        match db.add_player(player_name, player_discord_username, faction):
+        match db.add_player(player_name, player_discord_username.name, faction):
             case 0:
                 logger.info("Player added successfully")
                 return_message = f"Player {player_name} ({player_discord_username}) successfully added."
