@@ -440,13 +440,13 @@ class ModCommands(commands.Cog):
             return m.author == ctx.author and m.channel == ctx.channel
 
         try: # waiting for message
-            response = await self.bot.wait_for('message', check=check, timeout=30.0) # timeout - how long bot waits for message (in seconds)
-        except asyncio.TimeoutError: # returning after timeout
+            response = await self.bot.wait_for('message', check=check, timeout=30.0)
+        except asyncio.TimeoutError:
             await ctx.channel.send("Timed out.")
             return
 
         # if response is different than yes / y - return
-        if response.content.lower() not in ("yes", "y"): # lower() makes everything lowercase to also catch: YeS, YES etc.
+        if response.content.lower() not in ("yes", "y"):
             await ctx.channel.send("Cancelled.")
             logger.info("Game not reset, user cancelled")
             return
